@@ -51,6 +51,33 @@ interface WorklogResponse {
   };
 }
 
+interface IssueUpdateRequest {
+  fields?: {
+    summary?: string;
+    description?: string;
+    assignee?: { id: string };
+    labels?: string[];
+    priority?: { id: string };
+    [key: string]: any;
+  };
+  transition?: {
+    id: string;
+  };
+}
+
+interface IssueCreateRequest {
+  fields: {
+    project: { key: string };
+    summary: string;
+    description?: string;
+    issuetype: { name: string };
+    assignee?: { id: string };
+    priority?: { name: string };
+    labels?: string[];
+    [key: string]: any;
+  };
+}
+
 export class JiraService {
   private config: JiraConfig;
   private baseUrl: string;
@@ -130,6 +157,30 @@ export class JiraService {
   async getWorklogs(issueKey: string): Promise<WorklogResponse[]> {
     const response = await this.makeRequest<{ worklogs: WorklogResponse[] }>(`/issue/${issueKey}/worklog`);
     return response.worklogs;
+  }
+
+  async updateIssue(issueKey: string, updateData: IssueUpdateRequest): Promise<any> {
+    return this.makeRequest(`/issue/${issueKey}`, {
+      method: 'PUT',
+      body: JSON.stringify(updateData),
+    });
+  }
+
+  async createIssue(issueData: IssueCreateRequest): Promise<JiraIssue> {
+    return this.makeRequest<JiraIssue>('/issue', {
+      method: 'POST',
+      body: JSON.stringify(issueData),
+    });
+  }
+
+  async getIssueTransitions(issueKey: string): Promise<any[]> {
+    const response = await this.makeRequest<{ transitions: any[] }>(`/issue/${issueKey}/transitions`);
+    return response.transitions;
+  }
+
+  async getIssueTypes(projectKey: string): Promise<any[]> {
+    const response = await this.makeRequest<any[]>(`/issue/createmeta/${projectKey}/issuetypes`);
+    return response;
   }
 
   static formatTimeSpent(durationSeconds: number): string {

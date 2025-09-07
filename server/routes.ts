@@ -150,6 +150,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get single Jira issue
+  app.post("/api/jira/get-issue", async (req, res) => {
+    try {
+      const { issueKey, jiraConfig } = req.body;
+      
+      if (!jiraConfig) {
+        return res.status(400).json({ error: "Jira configuration is required" });
+      }
+
+      const jiraService = createJiraService(jiraConfig);
+      const issue = await jiraService.getIssue(issueKey);
+      res.json(issue);
+    } catch (error) {
+      console.error("Jira get issue error:", error);
+      res.status(500).json({ error: "Failed to get Jira issue" });
+    }
+  });
+
+  // Update Jira issue
+  app.post("/api/jira/update-issue", async (req, res) => {
+    try {
+      const { issueKey, updateData, jiraConfig } = req.body;
+      
+      if (!jiraConfig) {
+        return res.status(400).json({ error: "Jira configuration is required" });
+      }
+
+      const jiraService = createJiraService(jiraConfig);
+      const result = await jiraService.updateIssue(issueKey, updateData);
+      res.json({ success: true, result });
+    } catch (error) {
+      console.error("Jira update issue error:", error);
+      res.status(500).json({ error: "Failed to update Jira issue" });
+    }
+  });
+
+  // Create new Jira issue
+  app.post("/api/jira/create-issue", async (req, res) => {
+    try {
+      const { issueData, jiraConfig } = req.body;
+      
+      if (!jiraConfig) {
+        return res.status(400).json({ error: "Jira configuration is required" });
+      }
+
+      const jiraService = createJiraService(jiraConfig);
+      const result = await jiraService.createIssue(issueData);
+      res.json(result);
+    } catch (error) {
+      console.error("Jira create issue error:", error);
+      res.status(500).json({ error: "Failed to create Jira issue" });
+    }
+  });
+
+  // Get issue types for a project
+  app.post("/api/jira/issue-types", async (req, res) => {
+    try {
+      const { projectKey, jiraConfig } = req.body;
+      
+      if (!jiraConfig) {
+        return res.status(400).json({ error: "Jira configuration is required" });
+      }
+
+      const jiraService = createJiraService(jiraConfig);
+      const issueTypes = await jiraService.getIssueTypes(projectKey);
+      res.json(issueTypes);
+    } catch (error) {
+      console.error("Jira issue types error:", error);
+      res.status(500).json({ error: "Failed to fetch issue types" });
+    }
+  });
+
+  // Get transitions for an issue
+  app.post("/api/jira/transitions", async (req, res) => {
+    try {
+      const { issueKey, jiraConfig } = req.body;
+      
+      if (!jiraConfig) {
+        return res.status(400).json({ error: "Jira configuration is required" });
+      }
+
+      const jiraService = createJiraService(jiraConfig);
+      const transitions = await jiraService.getIssueTransitions(issueKey);
+      res.json(transitions);
+    } catch (error) {
+      console.error("Jira transitions error:", error);
+      res.status(500).json({ error: "Failed to fetch transitions" });
+    }
+  });
+
   // FileMaker integration
   app.get("/api/filemaker/clients", async (req, res) => {
     try {
