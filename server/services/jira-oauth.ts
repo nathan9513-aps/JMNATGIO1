@@ -147,10 +147,22 @@ export async function createJiraOAuthService(): Promise<JiraOAuthService | null>
   }
   
   // Determine base URL - check if we're in a Replit environment
-  const hostname = process.env.REPLIT_DOMAIN || 'localhost:5000';
-  const baseUrl = hostname.includes('replit') 
-    ? `https://${hostname}` 
-    : `http://${hostname}`;
+  const replId = process.env.REPL_ID;
+  const replOwner = process.env.REPL_OWNER;
+  const replSlug = process.env.REPL_SLUG;
+  
+  let hostname: string;
+  let baseUrl: string;
+  
+  if (replId && replOwner && replSlug) {
+    // Replit environment - use the proper replit.dev domain
+    hostname = `${replSlug}.${replOwner}.repl.co`;
+    baseUrl = `https://${hostname}`;
+  } else {
+    // Local development
+    hostname = 'localhost:5000';
+    baseUrl = `http://${hostname}`;
+  }
   
   const redirectUri = `${baseUrl}/oauth-callback`;
   
@@ -158,7 +170,10 @@ export async function createJiraOAuthService(): Promise<JiraOAuthService | null>
     hostname,
     baseUrl,
     redirectUri,
-    replit_domain: process.env.REPLIT_DOMAIN
+    replId,
+    replOwner,
+    replSlug,
+    isReplit: !!(replId && replOwner && replSlug)
   });
   
   return new JiraOAuthService({
