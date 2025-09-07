@@ -3,6 +3,8 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 import Dashboard from "@/pages/dashboard";
 import TimeTracking from "@/pages/time-tracking";
 import Clients from "@/pages/clients";
@@ -18,6 +20,14 @@ function Router() {
     <div className="min-h-screen flex w-full">
       <Sidebar />
       <div className="flex-1 w-full min-w-0">
+        {/* Prerelease Banner */}
+        <Alert className="rounded-none border-l-0 border-r-0 border-t-0 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+          <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+          <AlertDescription className="text-amber-800 dark:text-amber-200 font-medium">
+            ⚠️ Build Prerelease - Versione di sviluppo 1.14621.0_zinc_prerelease
+          </AlertDescription>
+        </Alert>
+        
         <Header />
         <main className="p-4 w-full full-width-layout">
           <Switch>
