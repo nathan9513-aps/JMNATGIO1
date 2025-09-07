@@ -362,13 +362,18 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
                       )}
                     />
 
-                    <div className="flex justify-end space-x-2 pt-4">
-                      <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
+                    <div className="flex justify-end space-x-3 pt-6 border-t">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={() => setShowCreateDialog(false)}
+                        className="px-6"
+                      >
                         Cancel
                       </Button>
                       <Button 
                         type="submit" 
-                        className="gradient-primary"
+                        className="gradient-primary px-6"
                         disabled={createIssueMutation.isPending}
                         data-testid="submit-create-issue"
                       >
@@ -520,13 +525,18 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
                                   )}
                                 />
 
-                                <div className="flex justify-end space-x-2 pt-4">
-                                  <Button type="button" variant="outline" onClick={() => setShowUpdateDialog(false)}>
+                                <div className="flex justify-end space-x-3 pt-6 border-t">
+                                  <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    onClick={() => setShowUpdateDialog(false)}
+                                    className="px-6"
+                                  >
                                     Cancel
                                   </Button>
                                   <Button 
                                     type="submit" 
-                                    className="gradient-primary"
+                                    className="gradient-primary px-6"
                                     disabled={updateIssueMutation.isPending}
                                     data-testid="submit-update-issue"
                                   >

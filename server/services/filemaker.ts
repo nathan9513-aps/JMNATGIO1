@@ -1,8 +1,10 @@
 interface FileMakerConfig {
-  host: string;
+  host: string; // For localhost: "localhost" or "127.0.0.1"
   database: string;
   username: string;
   password: string;
+  port?: number; // Default: 443 for HTTPS, 80 for HTTP
+  useSSL?: boolean; // Default: true for external hosts, false for localhost
 }
 
 interface FileMakerClient {
@@ -32,7 +34,17 @@ export class FileMakerService {
 
   constructor(config: FileMakerConfig) {
     this.config = config;
-    this.baseUrl = `https://${config.host}/fmi/data/v1/databases/${config.database}`;
+    
+    // Auto-detect if we should use SSL and which port
+    const isLocalhost = config.host === 'localhost' || config.host === '127.0.0.1' || config.host.startsWith('192.168.') || config.host.startsWith('10.') || config.host.startsWith('172.');
+    const useSSL = config.useSSL !== undefined ? config.useSSL : !isLocalhost;
+    const defaultPort = useSSL ? 443 : 80;
+    const port = config.port || defaultPort;
+    
+    const protocol = useSSL ? 'https' : 'http';
+    const portSuffix = (port !== defaultPort) ? `:${port}` : '';
+    
+    this.baseUrl = `${protocol}://${config.host}${portSuffix}/fmi/data/v1/databases/${config.database}`;
   }
 
   private async authenticate(): Promise<string> {
