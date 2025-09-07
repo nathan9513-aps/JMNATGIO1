@@ -6,6 +6,7 @@ import ActiveTimers from "@/components/time-tracking/active-timers";
 import MappingTable from "@/components/projects/mapping-table";
 import TimeReports from "@/components/reports/time-reports";
 import TimerDisplay from "@/components/time-tracking/timer-display";
+import IssueManagement from "@/components/jira/issue-management";
 
 export default function Dashboard() {
   const { data: summary } = useQuery({
@@ -121,6 +122,11 @@ export default function Dashboard() {
         <div className="xl:col-span-1">
           <ActiveTimers />
         </div>
+      </div>
+
+      {/* Jira Issue Management */}
+      <div className="mb-8">
+        <IssueManagement />
       </div>
 
       {/* Client-Project Mapping Section */}
