@@ -26,39 +26,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const { code, state, error } = req.query;
     
     if (error) {
-      console.error("OAuth error:", error);
+      console.error("❌ OAuth error from Atlassian:", error);
       return res.redirect(`/settings?error=${encodeURIComponent(error as string)}`);
     }
     
     if (!code) {
-      console.error("No authorization code received");
+      console.error("❌ No authorization code received");
       return res.redirect("/settings?error=no_code");
     }
     
     try {
-      console.log("Exchanging code for token...");
+      console.log("🔄 Starting token exchange with code:", (code as string).substring(0, 10) + "...");
       const oauthService = await createJiraOAuthService();
       
       if (!oauthService) {
-        console.error("OAuth service not configured");
+        console.error("❌ OAuth service not configured");
         return res.redirect("/settings?error=oauth_not_configured");
       }
       
+      // Exchange code for tokens using our improved service
       const tokens = await oauthService.exchangeCodeForTokens(code as string);
-      console.log("Token exchange successful:", { has_access_token: !!tokens.access_token });
+      console.log("✅ Token exchange successful:", { 
+        has_access_token: !!tokens.access_token,
+        has_refresh_token: !!tokens.refresh_token,
+        token_type: tokens.token_type 
+      });
       
-      // Save tokens to database
+      // Get accessible Jira sites
+      const resources = await oauthService.getAccessibleResources(tokens.access_token);
+      console.log("✅ Retrieved accessible resources:", { count: resources.length });
+      
+      if (resources.length === 0) {
+        console.error("❌ No accessible Jira sites found");
+        return res.redirect("/settings?error=no_jira_sites");
+      }
+
+      // Use the first available site
+      const primarySite = resources[0];
+      console.log("📍 Using primary site:", { name: primarySite.name, url: primarySite.url });
+      
+      // Save tokens and site info to storage
       await storage.setAppSetting("JIRA_OAUTH_ACCESS_TOKEN", tokens.access_token);
       if (tokens.refresh_token) {
         await storage.setAppSetting("JIRA_OAUTH_REFRESH_TOKEN", tokens.refresh_token);
       }
+      await storage.setAppSetting("JIRA_SITE_ID", primarySite.id);
+      await storage.setAppSetting("JIRA_SITE_URL", primarySite.url);
+      await storage.setAppSetting("JIRA_SITE_NAME", primarySite.name);
       
-      console.log("✅ OAuth authentication successful!");
+      // Set environment variables for this session
+      process.env.JIRA_AUTH_TYPE = 'oauth';
+      process.env.JIRA_OAUTH_ACCESS_TOKEN = tokens.access_token;
+      process.env.JIRA_OAUTH_REFRESH_TOKEN = tokens.refresh_token;
+      process.env.JIRA_SITE_ID = primarySite.id;
+      
+      console.log("✅ OAuth authentication successful! Redirecting to settings...");
       return res.redirect("/settings?success=oauth_connected");
       
-    } catch (error) {
-      console.error("OAuth token exchange failed:", error);
-      return res.redirect(`/settings?error=${encodeURIComponent('token_exchange_failed')}`);
+    } catch (error: any) {
+      console.error("❌ OAuth token exchange failed:", error);
+      const errorMessage = error.message || 'token_exchange_failed';
+      return res.redirect(`/settings?error=${encodeURIComponent(errorMessage)}`);
     }
   });
 

@@ -11,33 +11,53 @@ export default function OAuthCallback() {
     const state = urlParams.get('state');
     const error = urlParams.get('error');
 
+    console.log("🔐 OAuth callback page loaded:", { 
+      code: !!code, 
+      error: !!error, 
+      hasOpener: !!window.opener,
+      isPopup: window.opener !== null 
+    });
+
     if (error) {
-      // Send error to parent window and close
+      console.error("OAuth error received:", error);
+      
+      // Try to send error to parent window if it's a popup
       if (window.opener) {
         window.opener.postMessage({
           type: 'JIRA_OAUTH_ERROR',
           error: error
         }, window.location.origin);
+        window.close();
+      } else {
+        // Not a popup - redirect with error
+        setLocation(`/settings?error=${encodeURIComponent(error)}`);
       }
-      window.close();
       return;
     }
 
     if (code) {
-      // Send the code to the parent window
+      console.log("✅ Authorization code received");
+      
+      // Try to send the code to the parent window if it's a popup
       if (window.opener) {
+        console.log("📨 Sending code to parent window");
         window.opener.postMessage({
           type: 'JIRA_OAUTH_CALLBACK',
           code: code,
           state: state
         }, window.location.origin);
+        
+        // Close the popup window
+        window.close();
+      } else {
+        // Not a popup - handle directly by redirecting to server endpoint
+        console.log("🔄 Not a popup, redirecting to server callback");
+        window.location.href = `/oauth-callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state || '')}`;
       }
-      
-      // Close the popup window
-      window.close();
     } else {
+      console.error("No authorization code received");
       // No code received, redirect to settings
-      setLocation('/settings');
+      setLocation('/settings?error=no_code');
     }
   }, [setLocation]);
 
