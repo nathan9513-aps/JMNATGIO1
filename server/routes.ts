@@ -590,17 +590,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/jira/oauth/status", async (req, res) => {
     try {
-      const isOAuthConfigured = !!(
-        process.env.JIRA_OAUTH_CLIENT_ID && 
-        process.env.JIRA_OAUTH_CLIENT_SECRET && 
-        process.env.JIRA_OAUTH_REDIRECT_URI
-      );
+      // Check if OAuth credentials are configured in database
+      const clientId = await storage.getAppSetting("JIRA_OAUTH_CLIENT_ID");
+      const clientSecret = await storage.getAppSetting("JIRA_OAUTH_CLIENT_SECRET");
+      const isOAuthConfigured = !!(clientId?.value && clientSecret?.value);
       
       const isAuthenticated = !!(
         process.env.JIRA_AUTH_TYPE === 'oauth' &&
         process.env.JIRA_OAUTH_ACCESS_TOKEN &&
         process.env.JIRA_SITE_ID
       );
+
+      console.log("OAuth status check:", { 
+        isOAuthConfigured,
+        hasClientId: !!clientId?.value,
+        hasClientSecret: !!clientSecret?.value,
+        isAuthenticated
+      });
 
       res.json({
         oauthConfigured: isOAuthConfigured,
