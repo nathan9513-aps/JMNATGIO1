@@ -23,7 +23,13 @@ import {
   Tag,
   AlertCircle,
   CheckCircle,
-  Clock4
+  Clock4,
+  MessageSquare,
+  Send,
+  ArrowRight,
+  X,
+  Check,
+  Eye
 } from "lucide-react";
 
 interface JiraIssue {
@@ -41,6 +47,26 @@ interface JiraIssue {
   };
 }
 
+interface JiraComment {
+  id: string;
+  body: string;
+  author: {
+    displayName: string;
+    emailAddress: string;
+  };
+  created: string;
+  updated: string;
+}
+
+interface JiraTransition {
+  id: string;
+  name: string;
+  to: {
+    name: string;
+    id: string;
+  };
+}
+
 const updateIssueSchema = z.object({
   summary: z.string().min(1, "Summary is required"),
   description: z.string().optional(),
@@ -55,8 +81,19 @@ const createIssueSchema = z.object({
   labels: z.string().optional(),
 });
 
+const commentSchema = z.object({
+  body: z.string().min(1, "Comment is required"),
+});
+
+const transitionSchema = z.object({
+  transitionId: z.string().min(1, "Transition is required"),
+  comment: z.string().optional(),
+});
+
 type UpdateIssueFormData = z.infer<typeof updateIssueSchema>;
 type CreateIssueFormData = z.infer<typeof createIssueSchema>;
+type CommentFormData = z.infer<typeof commentSchema>;
+type TransitionFormData = z.infer<typeof transitionSchema>;
 
 interface IssueManagementProps {
   jiraConfig?: {
@@ -71,6 +108,8 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
   const [selectedIssue, setSelectedIssue] = useState<JiraIssue | null>(null);
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showTransitionDialog, setShowTransitionDialog] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -78,11 +117,10 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
   const { data: searchResults, isLoading: searchLoading } = useQuery({
     queryKey: ['/api/jira/search-issues', searchQuery],
     queryFn: async () => {
-      const response = await apiRequest('/api/jira/search-issues', {
+      return await apiRequest('/api/jira/search-issues', {
         method: 'POST',
         body: JSON.stringify({ query: searchQuery, jiraConfig })
       });
-      return response;
     },
     enabled: !!searchQuery && !!jiraConfig,
   });
@@ -145,12 +183,90 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
     },
   });
 
+  // Get comments for selected issue
+  const { data: comments, isLoading: commentsLoading } = useQuery({
+    queryKey: ['/api/jira/comments', selectedIssue?.key],
+    queryFn: async () => {
+      if (!selectedIssue) return [];
+      return await apiRequest('/api/jira/comments', {
+        method: 'POST',
+        body: JSON.stringify({ issueKey: selectedIssue.key, jiraConfig })
+      });
+    },
+    enabled: !!selectedIssue && !!jiraConfig,
+  });
+
+  // Get transitions for selected issue
+  const { data: transitions } = useQuery({
+    queryKey: ['/api/jira/transitions', selectedIssue?.key],
+    queryFn: async () => {
+      if (!selectedIssue) return [];
+      return await apiRequest('/api/jira/transitions', {
+        method: 'POST',
+        body: JSON.stringify({ issueKey: selectedIssue.key, jiraConfig })
+      });
+    },
+    enabled: !!selectedIssue && !!jiraConfig,
+  });
+
+  // Add comment mutation
+  const addCommentMutation = useMutation({
+    mutationFn: async (data: { issueKey: string; comment: string }) => {
+      return await apiRequest('/api/jira/add-comment', {
+        method: 'POST',
+        body: JSON.stringify({ ...data, jiraConfig })
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Comment added successfully!" });
+      commentForm.reset();
+      queryClient.invalidateQueries({ queryKey: ['/api/jira/comments'] });
+    },
+    onError: () => {
+      toast({ 
+        title: "Failed to add comment", 
+        variant: "destructive" 
+      });
+    },
+  });
+
+  // Transition issue mutation
+  const transitionIssueMutation = useMutation({
+    mutationFn: async (data: { issueKey: string; transitionId: string; comment?: string }) => {
+      return await apiRequest('/api/jira/transition-issue', {
+        method: 'POST',
+        body: JSON.stringify({ ...data, jiraConfig })
+      });
+    },
+    onSuccess: () => {
+      toast({ title: "Issue status updated successfully!" });
+      setShowTransitionDialog(false);
+      transitionForm.reset();
+      queryClient.invalidateQueries({ queryKey: ['/api/jira/search-issues'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/jira/transitions'] });
+    },
+    onError: () => {
+      toast({ 
+        title: "Failed to update status", 
+        variant: "destructive" 
+      });
+    },
+  });
+
   const updateForm = useForm<UpdateIssueFormData>({
     resolver: zodResolver(updateIssueSchema),
   });
 
   const createForm = useForm<CreateIssueFormData>({
     resolver: zodResolver(createIssueSchema),
+  });
+
+  const commentForm = useForm<CommentFormData>({
+    resolver: zodResolver(commentSchema),
+  });
+
+  const transitionForm = useForm<TransitionFormData>({
+    resolver: zodResolver(transitionSchema),
   });
 
   const onUpdateSubmit = (data: UpdateIssueFormData) => {
@@ -182,6 +298,23 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
     };
 
     createIssueMutation.mutate({ issueData });
+  };
+
+  const onCommentSubmit = (data: CommentFormData) => {
+    if (!selectedIssue) return;
+    addCommentMutation.mutate({ 
+      issueKey: selectedIssue.key, 
+      comment: data.body 
+    });
+  };
+
+  const onTransitionSubmit = (data: TransitionFormData) => {
+    if (!selectedIssue) return;
+    transitionIssueMutation.mutate({ 
+      issueKey: selectedIssue.key, 
+      transitionId: data.transitionId,
+      comment: data.comment 
+    });
   };
 
   const getStatusIcon = (status: string) => {
@@ -451,6 +584,18 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
                         <Button
                           size="sm"
                           variant="outline"
+                          onClick={() => {
+                            setSelectedIssue(issue);
+                            setShowDetailDialog(true);
+                          }}
+                          data-testid={`detail-issue-${issue.key}`}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        
+                        <Button
+                          size="sm"
+                          variant="outline"
                           onClick={() => window.open(`https://${jiraConfig.domain}.atlassian.net/browse/${issue.key}`, '_blank')}
                           data-testid={`view-issue-${issue.key}`}
                         >
@@ -560,6 +705,225 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Issue Detail Dialog with Comments and Transitions */}
+      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <span>Issue Details: {selectedIssue?.key}</span>
+              {selectedIssue && (
+                <Badge className={`text-xs ${getStatusColor(selectedIssue.fields.status.name)}`}>
+                  {getStatusIcon(selectedIssue.fields.status.name)}
+                  <span className="ml-1">{selectedIssue.fields.status.name}</span>
+                </Badge>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedIssue && (
+            <div className="space-y-6">
+              {/* Issue Summary */}
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold">{selectedIssue.fields.summary}</h3>
+                <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                  <div className="flex items-center space-x-1">
+                    <Tag className="w-3 h-3" />
+                    <span>{selectedIssue.fields.project.name}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <span>{selectedIssue.fields.issuetype.name}</span>
+                  </div>
+                  {selectedIssue.fields.assignee && (
+                    <div className="flex items-center space-x-1">
+                      <User className="w-3 h-3" />
+                      <span>{selectedIssue.fields.assignee.displayName}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Status Transitions */}
+              <div className="border border-border/60 rounded-lg p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold flex items-center space-x-2">
+                    <ArrowRight className="w-4 h-4" />
+                    <span>Change Status</span>
+                  </h4>
+                  <Dialog open={showTransitionDialog} onOpenChange={setShowTransitionDialog}>
+                    <DialogTrigger asChild>
+                      <Button 
+                        size="sm" 
+                        className="gradient-primary"
+                        data-testid="change-status-button"
+                      >
+                        Change Status
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Change Issue Status</DialogTitle>
+                      </DialogHeader>
+                      <Form {...transitionForm}>
+                        <form onSubmit={transitionForm.handleSubmit(onTransitionSubmit)} className="space-y-4">
+                          <FormField
+                            control={transitionForm.control}
+                            name="transitionId"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>New Status</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger data-testid="transition-select">
+                                      <SelectValue placeholder="Select new status" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {Array.isArray(transitions) && transitions.map((transition: JiraTransition) => (
+                                      <SelectItem key={transition.id} value={transition.id}>
+                                        {transition.name} → {transition.to.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={transitionForm.control}
+                            name="comment"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Comment (optional)</FormLabel>
+                                <FormControl>
+                                  <Textarea 
+                                    {...field} 
+                                    placeholder="Add a comment about this status change..."
+                                    rows={3}
+                                    data-testid="transition-comment-input"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <div className="flex justify-end space-x-3 pt-4">
+                            <Button 
+                              type="button" 
+                              variant="outline" 
+                              onClick={() => setShowTransitionDialog(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button 
+                              type="submit" 
+                              className="gradient-primary"
+                              disabled={transitionIssueMutation.isPending}
+                              data-testid="submit-transition"
+                            >
+                              {transitionIssueMutation.isPending ? 'Updating...' : 'Update Status'}
+                            </Button>
+                          </div>
+                        </form>
+                      </Form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                
+                {Array.isArray(transitions) && transitions.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {transitions.slice(0, 3).map((transition: JiraTransition) => (
+                      <Button
+                        key={transition.id}
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          transitionForm.setValue('transitionId', transition.id);
+                          setShowTransitionDialog(true);
+                        }}
+                        className="text-xs"
+                        data-testid={`quick-transition-${transition.id}`}
+                      >
+                        → {transition.to.name}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Comments Section */}
+              <div className="border border-border/60 rounded-lg p-4 space-y-4">
+                <h4 className="font-semibold flex items-center space-x-2">
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Comments</span>
+                </h4>
+                
+                {/* Add Comment Form */}
+                <Form {...commentForm}>
+                  <form onSubmit={commentForm.handleSubmit(onCommentSubmit)} className="space-y-3">
+                    <FormField
+                      control={commentForm.control}
+                      name="body"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Textarea 
+                              {...field} 
+                              placeholder="Add a comment..."
+                              rows={3}
+                              data-testid="comment-input"
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex justify-end">
+                      <Button 
+                        type="submit" 
+                        size="sm" 
+                        className="gradient-primary"
+                        disabled={addCommentMutation.isPending}
+                        data-testid="submit-comment"
+                      >
+                        <Send className="w-3 h-3 mr-1" />
+                        {addCommentMutation.isPending ? 'Adding...' : 'Add Comment'}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+
+                {/* Comments List */}
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {commentsLoading ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Clock className="w-4 h-4 animate-spin text-primary mr-2" />
+                      <span className="text-sm">Loading comments...</span>
+                    </div>
+                  ) : Array.isArray(comments) && comments.length > 0 ? (
+                    comments.map((comment: JiraComment) => (
+                      <div key={comment.id} className="border border-border/40 rounded-lg p-3 space-y-2">
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span className="font-medium">{comment.author.displayName}</span>
+                          <span>{new Date(comment.created).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-sm">{comment.body}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-center text-muted-foreground text-sm py-4">
+                      No comments yet. Be the first to comment!
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
