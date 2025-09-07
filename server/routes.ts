@@ -240,6 +240,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Transition an issue (change status, close, etc.)
+  app.post("/api/jira/transition-issue", async (req, res) => {
+    try {
+      const { issueKey, transitionId, comment, jiraConfig } = req.body;
+      
+      if (!jiraConfig) {
+        return res.status(400).json({ error: "Jira configuration is required" });
+      }
+
+      const jiraService = createJiraService(jiraConfig);
+      const transitionData = {
+        transition: { id: transitionId },
+        ...(comment && { comment: { body: comment } })
+      };
+      
+      await jiraService.transitionIssue(issueKey, transitionData);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Jira transition issue error:", error);
+      res.status(500).json({ error: "Failed to transition issue" });
+    }
+  });
+
+  // Get comments for an issue
+  app.post("/api/jira/comments", async (req, res) => {
+    try {
+      const { issueKey, jiraConfig } = req.body;
+      
+      if (!jiraConfig) {
+        return res.status(400).json({ error: "Jira configuration is required" });
+      }
+
+      const jiraService = createJiraService(jiraConfig);
+      const comments = await jiraService.getComments(issueKey);
+      res.json(comments);
+    } catch (error) {
+      console.error("Jira comments error:", error);
+      res.status(500).json({ error: "Failed to fetch comments" });
+    }
+  });
+
+  // Add comment to an issue
+  app.post("/api/jira/add-comment", async (req, res) => {
+    try {
+      const { issueKey, comment, jiraConfig } = req.body;
+      
+      if (!jiraConfig) {
+        return res.status(400).json({ error: "Jira configuration is required" });
+      }
+
+      const jiraService = createJiraService(jiraConfig);
+      const result = await jiraService.addComment(issueKey, { body: comment });
+      res.json(result);
+    } catch (error) {
+      console.error("Jira add comment error:", error);
+      res.status(500).json({ error: "Failed to add comment" });
+    }
+  });
+
   // FileMaker integration
   app.get("/api/filemaker/clients", async (req, res) => {
     try {

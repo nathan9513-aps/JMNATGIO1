@@ -51,6 +51,34 @@ interface WorklogResponse {
   };
 }
 
+interface CommentRequest {
+  body: string;
+  visibility?: {
+    type: string;
+    value: string;
+  };
+}
+
+interface CommentResponse {
+  id: string;
+  body: string;
+  author: {
+    displayName: string;
+    emailAddress: string;
+  };
+  created: string;
+  updated: string;
+}
+
+interface TransitionRequest {
+  transition: {
+    id: string;
+  };
+  comment?: {
+    body: string;
+  };
+}
+
 interface IssueUpdateRequest {
   fields?: {
     summary?: string;
@@ -181,6 +209,40 @@ export class JiraService {
   async getIssueTypes(projectKey: string): Promise<any[]> {
     const response = await this.makeRequest<any[]>(`/issue/createmeta/${projectKey}/issuetypes`);
     return response;
+  }
+
+  // Comments
+  async addComment(issueKey: string, comment: CommentRequest): Promise<CommentResponse> {
+    return this.makeRequest<CommentResponse>(`/issue/${issueKey}/comment`, {
+      method: 'POST',
+      body: JSON.stringify(comment),
+    });
+  }
+
+  async getComments(issueKey: string): Promise<CommentResponse[]> {
+    const response = await this.makeRequest<{ comments: CommentResponse[] }>(`/issue/${issueKey}/comment`);
+    return response.comments;
+  }
+
+  async updateComment(issueKey: string, commentId: string, comment: CommentRequest): Promise<CommentResponse> {
+    return this.makeRequest<CommentResponse>(`/issue/${issueKey}/comment/${commentId}`, {
+      method: 'PUT',
+      body: JSON.stringify(comment),
+    });
+  }
+
+  async deleteComment(issueKey: string, commentId: string): Promise<void> {
+    await this.makeRequest(`/issue/${issueKey}/comment/${commentId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Transitions
+  async transitionIssue(issueKey: string, transitionData: TransitionRequest): Promise<void> {
+    await this.makeRequest(`/issue/${issueKey}/transitions`, {
+      method: 'POST',
+      body: JSON.stringify(transitionData),
+    });
   }
 
   static formatTimeSpent(durationSeconds: number): string {
