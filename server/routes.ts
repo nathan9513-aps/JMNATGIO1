@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { createJiraOAuthService } from "./services/jira-oauth";
 import { createJiraService } from "./services/jira";
 import { createFileMakerService } from "./services/filemaker";
 import { 
@@ -449,6 +450,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Jira credentials save error:", error);
       res.status(500).json({ error: "Failed to save Jira credentials" });
+    }
+  });
+
+  // Jira OAuth endpoints
+  app.get("/api/jira/oauth/auth-url", async (req, res) => {
+    try {
+      if (!process.env.JIRA_OAUTH_CLIENT_ID) {
+        return res.status(400).json({ 
+          error: "OAuth not configured", 
+          message: "Jira OAuth Client ID not configured. Please set JIRA_OAUTH_CLIENT_ID environment variable." 
+        });
+      }
+
+      const oauthService = createJiraOAuthService();
+      const state = Math.random().toString(36).substring(2, 15);
+      
+      // Store state in session or memory for validation (in production, use proper session storage)
+      const authUrl = oauthService.generateAuthUrl(state);
+      
+      res.json({ authUrl, state });
+    } catch (error) {
+      console.error("OAuth auth URL error:", error);
+      res.status(500).json({ error: "Failed to generate OAuth URL" });
+    }
+  });
+
+  app.post("/api/jira/oauth/callback", async (req, res) => {
+    try {
+      const { code, state } = req.body;
+      
+      if (!code) {
+        return res.status(400).json({ error: "Authorization code is required" });
+      }
+
+      const oauthService = createJiraOAuthService();
+      
+      // Exchange code for tokens
+      const tokens = await oauthService.exchangeCodeForTokens(code);
+      
+      // Get accessible resources (Jira sites)
+      const resources = await oauthService.getAccessibleResources(tokens.access_token);
+      
+      if (resources.length === 0) {
+        return res.status(400).json({ error: "No accessible Jira sites found" });
+      }
+
+      // Use the first available site (in production, let user choose)
+      const primarySite = resources[0];
+      
+      // Store OAuth tokens in environment variables for this session
+      process.env.JIRA_AUTH_TYPE = 'oauth';
+      process.env.JIRA_OAUTH_ACCESS_TOKEN = tokens.access_token;
+      process.env.JIRA_OAUTH_REFRESH_TOKEN = tokens.refresh_token;
+      process.env.JIRA_SITE_ID = primarySite.id;
+
+      // Test the OAuth connection by fetching projects
+      try {
+        const jiraService = createJiraService();
+        await jiraService.getProjects();
+      } catch (error) {
+        return res.status(400).json({ error: "Failed to connect to Jira with OAuth tokens" });
+      }
+
+      res.json({ 
+        success: true, 
+        message: "OAuth authentication successful",
+        siteName: primarySite.name,
+        siteUrl: primarySite.url,
+        accessibleSites: resources.length
+      });
+    } catch (error) {
+      console.error("OAuth callback error:", error);
+      res.status(500).json({ error: "OAuth authentication failed" });
+    }
+  });
+
+  app.get("/api/jira/oauth/status", async (req, res) => {
+    try {
+      const isOAuthConfigured = !!(
+        process.env.JIRA_OAUTH_CLIENT_ID && 
+        process.env.JIRA_OAUTH_CLIENT_SECRET && 
+        process.env.JIRA_OAUTH_REDIRECT_URI
+      );
+      
+      const isAuthenticated = !!(
+        process.env.JIRA_AUTH_TYPE === 'oauth' &&
+        process.env.JIRA_OAUTH_ACCESS_TOKEN &&
+        process.env.JIRA_SITE_ID
+      );
+
+      res.json({
+        oauthConfigured: isOAuthConfigured,
+        authenticated: isAuthenticated,
+        authType: process.env.JIRA_AUTH_TYPE || 'basic'
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to check OAuth status" });
     }
   });
 

@@ -1,7 +1,11 @@
 interface JiraConfig {
-  domain: string;
-  username: string;
-  apiToken: string;
+  domain?: string;
+  username?: string;
+  apiToken?: string;
+  // OAuth fields
+  accessToken?: string;
+  siteId?: string;
+  authType?: 'basic' | 'oauth';
 }
 
 interface JiraIssue {
@@ -113,21 +117,35 @@ export class JiraService {
   constructor(config?: JiraConfig) {
     // Use environment variables if no config provided
     this.config = config || {
-      domain: process.env.JIRA_DOMAIN!,
-      username: process.env.JIRA_USERNAME!,
-      apiToken: process.env.JIRA_API_TOKEN!
+      domain: process.env.JIRA_DOMAIN,
+      username: process.env.JIRA_USERNAME,
+      apiToken: process.env.JIRA_API_TOKEN,
+      accessToken: process.env.JIRA_OAUTH_ACCESS_TOKEN,
+      siteId: process.env.JIRA_SITE_ID,
+      authType: process.env.JIRA_AUTH_TYPE as 'basic' | 'oauth' || 'basic'
     };
     
-    if (!this.config.domain || !this.config.username || !this.config.apiToken) {
-      throw new Error('Jira configuration is incomplete. Please configure JIRA_DOMAIN, JIRA_USERNAME, and JIRA_API_TOKEN environment variables.');
+    // Check OAuth first, then fallback to basic auth
+    if (this.config.authType === 'oauth') {
+      if (!this.config.accessToken || !this.config.siteId) {
+        throw new Error('Jira OAuth configuration is incomplete. Please configure JIRA_OAUTH_ACCESS_TOKEN and JIRA_SITE_ID environment variables.');
+      }
+      this.baseUrl = `https://api.atlassian.com/ex/jira/${this.config.siteId}/rest/api/3`;
+    } else {
+      if (!this.config.domain || !this.config.username || !this.config.apiToken) {
+        throw new Error('Jira configuration is incomplete. Please configure JIRA_DOMAIN, JIRA_USERNAME, and JIRA_API_TOKEN environment variables.');
+      }
+      this.baseUrl = `https://${this.config.domain}.atlassian.net/rest/api/3`;
     }
-    
-    this.baseUrl = `https://${this.config.domain}.atlassian.net/rest/api/3`;
   }
 
   private getAuthHeader(): string {
-    const auth = Buffer.from(`${this.config.username}:${this.config.apiToken}`).toString('base64');
-    return `Basic ${auth}`;
+    if (this.config.authType === 'oauth' && this.config.accessToken) {
+      return `Bearer ${this.config.accessToken}`;
+    } else {
+      const auth = Buffer.from(`${this.config.username}:${this.config.apiToken}`).toString('base64');
+      return `Basic ${auth}`;
+    }
   }
 
   private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {

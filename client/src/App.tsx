@@ -11,6 +11,7 @@ import Clients from "@/pages/clients";
 import Projects from "@/pages/projects";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
+import OAuthCallback from "@/pages/oauth-callback";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
@@ -38,6 +39,7 @@ function Router() {
             <Route path="/projects" component={Projects} />
             <Route path="/reports" component={Reports} />
             <Route path="/settings" component={Settings} />
+            <Route path="/oauth/callback" component={OAuthCallback} />
             <Route component={NotFound} />
           </Switch>
         </main>
