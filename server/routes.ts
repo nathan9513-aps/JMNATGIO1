@@ -8,7 +8,8 @@ import {
   insertTimeEntrySchema, 
   insertClientSchema, 
   insertProjectSchema, 
-  insertClientProjectMappingSchema 
+  insertClientProjectMappingSchema,
+  insertAppSettingSchema
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -418,6 +419,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to check Jira credentials" });
+    }
+  });
+
+  // OAuth configuration management
+  app.post("/api/oauth/config", async (req, res) => {
+    try {
+      const { clientId, clientSecret } = req.body;
+      
+      if (!clientId || !clientSecret) {
+        return res.status(400).json({ error: "Client ID and Client Secret are required" });
+      }
+      
+      // Save credentials in storage
+      await storage.setAppSetting("JIRA_OAUTH_CLIENT_ID", clientId);
+      await storage.setAppSetting("JIRA_OAUTH_CLIENT_SECRET", clientSecret);
+      
+      res.json({ 
+        success: true, 
+        message: "OAuth credentials saved successfully" 
+      });
+    } catch (error) {
+      console.error("OAuth config error:", error);
+      res.status(500).json({ error: "Failed to save OAuth credentials" });
+    }
+  });
+
+  app.get("/api/oauth/config", async (req, res) => {
+    try {
+      const clientId = await storage.getAppSetting("JIRA_OAUTH_CLIENT_ID");
+      const clientSecret = await storage.getAppSetting("JIRA_OAUTH_CLIENT_SECRET");
+      
+      res.json({
+        configured: !!(clientId?.value && clientSecret?.value),
+        hasClientId: !!clientId?.value,
+        hasClientSecret: !!clientSecret?.value,
+      });
+    } catch (error) {
+      console.error("OAuth config check error:", error);
+      res.status(500).json({ error: "Failed to check OAuth configuration" });
     }
   });
 

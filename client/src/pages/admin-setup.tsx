@@ -61,7 +61,7 @@ export default function AdminSetup() {
   const domainInfo = getDomainInfo();
 
   const { data: oauthStatus } = useQuery({
-    queryKey: ["/api/jira/oauth/status"],
+    queryKey: ["/api/oauth/config"],
     enabled: isAuthenticated,
   });
 
@@ -75,15 +75,21 @@ export default function AdminSetup() {
 
   const saveOAuthMutation = useMutation({
     mutationFn: async (data: OAuthSetupData) => {
-      // Simula il salvataggio dei segreti (in realtà dovrebbero essere gestiti tramite environment)
-      return { success: true };
+      const response = await apiRequest("/api/oauth/config", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      return response;
     },
     onSuccess: () => {
       toast({
         title: "Configurazione salvata",
         description: "Le credenziali OAuth sono state configurate con successo",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/jira/oauth/status"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/oauth/config"] });
     },
     onError: () => {
       toast({
