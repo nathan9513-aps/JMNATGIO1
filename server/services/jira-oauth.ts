@@ -54,83 +54,193 @@ export class JiraOAuthService {
 
   // Exchange authorization code for tokens
   async exchangeCodeForTokens(code: string): Promise<JiraOAuthTokens> {
-    const response = await fetch(`${this.baseAuthUrl}/oauth/token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        grant_type: 'authorization_code',
-        client_id: this.config.clientId,
-        client_secret: this.config.clientSecret,
-        code: code,
-        redirect_uri: this.config.redirectUri,
-      }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    try {
+      console.log("🔄 Starting OAuth token exchange...");
+      
+      const response = await fetch(`${this.baseAuthUrl}/oauth/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'Replit-Jira-Time-Tracker/1.0',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          grant_type: 'authorization_code',
+          client_id: this.config.clientId,
+          client_secret: this.config.clientSecret,
+          code: code,
+          redirect_uri: this.config.redirectUri,
+        }),
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`OAuth token exchange failed: ${errorText}`);
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ OAuth token exchange HTTP error:", response.status, errorText);
+        throw new Error(`OAuth token exchange failed (${response.status}): ${errorText}`);
+      }
+
+      console.log("✅ OAuth token exchange successful");
+      return response.json();
+      
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      console.error("❌ OAuth token exchange network error:", error);
+      
+      if (error.name === 'AbortError') {
+        throw new Error('OAuth token exchange timed out after 30 seconds');
+      }
+      
+      if (error.code === 'ENOTFOUND' || error.errno === -3001) {
+        throw new Error('Network connectivity issue: Unable to reach Atlassian servers. Please check your internet connection.');
+      }
+      
+      throw new Error(`OAuth token exchange failed: ${error.message}`);
     }
-
-    return response.json();
   }
 
   // Refresh access token using refresh token
   async refreshAccessToken(refreshToken: string): Promise<JiraOAuthTokens> {
-    const response = await fetch(`${this.baseAuthUrl}/oauth/token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        grant_type: 'refresh_token',
-        client_id: this.config.clientId,
-        client_secret: this.config.clientSecret,
-        refresh_token: refreshToken,
-      }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    
+    try {
+      console.log("🔄 Refreshing OAuth token...");
+      
+      const response = await fetch(`${this.baseAuthUrl}/oauth/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'Replit-Jira-Time-Tracker/1.0',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          grant_type: 'refresh_token',
+          client_id: this.config.clientId,
+          client_secret: this.config.clientSecret,
+          refresh_token: refreshToken,
+        }),
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Token refresh failed: ${errorText}`);
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Token refresh HTTP error:", response.status, errorText);
+        throw new Error(`Token refresh failed (${response.status}): ${errorText}`);
+      }
+
+      console.log("✅ Token refresh successful");
+      return response.json();
+      
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      console.error("❌ Token refresh network error:", error);
+      
+      if (error.name === 'AbortError') {
+        throw new Error('Token refresh timed out after 30 seconds');
+      }
+      
+      if (error.code === 'ENOTFOUND' || error.errno === -3001) {
+        throw new Error('Network connectivity issue: Unable to reach Atlassian servers during token refresh.');
+      }
+      
+      throw new Error(`Token refresh failed: ${error.message}`);
     }
-
-    return response.json();
   }
 
   // Get accessible Jira sites for the user
   async getAccessibleResources(accessToken: string): Promise<JiraAccessibleResource[]> {
-    const response = await fetch(`${this.baseApiUrl}/oauth/token/accessible-resources`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/json',
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    
+    try {
+      console.log("🔄 Fetching accessible Jira resources...");
+      
+      const response = await fetch(`${this.baseApiUrl}/oauth/token/accessible-resources`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+          'User-Agent': 'Replit-Jira-Time-Tracker/1.0',
+        },
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to get accessible resources: ${errorText}`);
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Get accessible resources HTTP error:", response.status, errorText);
+        throw new Error(`Failed to get accessible resources (${response.status}): ${errorText}`);
+      }
+
+      console.log("✅ Successfully fetched accessible resources");
+      return response.json();
+      
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      console.error("❌ Get accessible resources network error:", error);
+      
+      if (error.name === 'AbortError') {
+        throw new Error('Request to get accessible resources timed out after 30 seconds');
+      }
+      
+      if (error.code === 'ENOTFOUND' || error.errno === -3001) {
+        throw new Error('Network connectivity issue: Unable to reach Atlassian API servers.');
+      }
+      
+      throw new Error(`Failed to get accessible resources: ${error.message}`);
     }
-
-    return response.json();
   }
 
   // Get user information
   async getUserInfo(accessToken: string): Promise<any> {
-    const response = await fetch(`${this.baseApiUrl}/me`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/json',
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    
+    try {
+      console.log("🔄 Fetching user info...");
+      
+      const response = await fetch(`${this.baseApiUrl}/me`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
+          'User-Agent': 'Replit-Jira-Time-Tracker/1.0',
+        },
+        signal: controller.signal,
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Failed to get user info: ${errorText}`);
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("❌ Get user info HTTP error:", response.status, errorText);
+        throw new Error(`Failed to get user info (${response.status}): ${errorText}`);
+      }
+
+      console.log("✅ Successfully fetched user info");
+      return response.json();
+      
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      console.error("❌ Get user info network error:", error);
+      
+      if (error.name === 'AbortError') {
+        throw new Error('Request to get user info timed out after 30 seconds');
+      }
+      
+      if (error.code === 'ENOTFOUND' || error.errno === -3001) {
+        throw new Error('Network connectivity issue: Unable to reach Atlassian API for user info.');
+      }
+      
+      throw new Error(`Failed to get user info: ${error.message}`);
     }
-
-    return response.json();
   }
 }
 
