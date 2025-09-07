@@ -30,7 +30,35 @@ export default function AdminSetup() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Genera automaticamente l'URL callback in base al dominio corrente
+  const isReplit = window.location.hostname.includes('replit.dev') || window.location.hostname.includes('replit.app');
+  const isLocal = window.location.hostname === 'localhost';
+  
   const callbackUrl = `${window.location.origin}/oauth/callback`;
+  
+  const getDomainInfo = () => {
+    if (isReplit) {
+      return {
+        type: 'Replit',
+        description: 'Stai usando Replit - l\'URL callback è generato automaticamente dal tuo dominio',
+        color: 'blue'
+      };
+    } else if (isLocal) {
+      return {
+        type: 'Sviluppo Locale',
+        description: 'Stai sviluppando in locale - ricorda di cambiare l\'URL quando pubblichi',
+        color: 'orange'
+      };
+    } else {
+      return {
+        type: 'Dominio Personalizzato',
+        description: 'Stai usando un dominio personalizzato',
+        color: 'green'
+      };
+    }
+  };
+  
+  const domainInfo = getDomainInfo();
 
   const { data: oauthStatus } = useQuery({
     queryKey: ["/api/jira/oauth/status"],
@@ -156,13 +184,26 @@ export default function AdminSetup() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-4">
-            <Badge variant={(oauthStatus as any)?.oauthConfigured ? "default" : "secondary"}>
-              {(oauthStatus as any)?.oauthConfigured ? "✓ Configurato" : "Non configurato"}
-            </Badge>
-            <Badge variant={(oauthStatus as any)?.authenticated ? "default" : "secondary"}>
-              {(oauthStatus as any)?.authenticated ? "✓ Autenticato" : "Non autenticato"}
-            </Badge>
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <Badge variant={(oauthStatus as any)?.oauthConfigured ? "default" : "secondary"}>
+                {(oauthStatus as any)?.oauthConfigured ? "✓ OAuth Configurato" : "OAuth Non configurato"}
+              </Badge>
+              <Badge variant={(oauthStatus as any)?.authenticated ? "default" : "secondary"}>
+                {(oauthStatus as any)?.authenticated ? "✓ Utente Autenticato" : "Utente Non autenticato"}
+              </Badge>
+            </div>
+            
+            {/* Info dominio corrente */}
+            <div className="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+              <div className="flex items-center gap-2 mb-1">
+                <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900">
+                  {domainInfo.type}
+                </Badge>
+                <span className="text-sm font-medium">Dominio attuale</span>
+              </div>
+              <code className="text-xs text-muted-foreground">{window.location.origin}</code>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -221,18 +262,57 @@ export default function AdminSetup() {
           {/* Passo 4 */}
           <div className="border-l-4 border-purple-500 pl-4">
             <h3 className="font-semibold text-lg mb-2">4. Configura URL di callback</h3>
+            
+            {/* Info ambiente */}
+            <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900">
+                  {domainInfo.type}
+                </Badge>
+                <span className="text-sm font-medium">Ambiente rilevato automaticamente</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {domainInfo.description}
+              </p>
+            </div>
+            
             <p className="text-sm text-muted-foreground mb-3">
-              Copia questo URL esatto nella sezione "Authorization" → "Callback URL":
+              Copia questo URL <strong>esatto</strong> nella sezione "Authorization" → "Callback URL" della tua app OAuth:
             </p>
-            <div className="flex items-center gap-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg">
-              <code className="flex-1 text-sm">{callbackUrl}</code>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => copyToClipboard(callbackUrl)}
-              >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              </Button>
+            
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 p-3 bg-gray-100 dark:bg-gray-800 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600">
+                <code className="flex-1 text-sm font-mono bg-white dark:bg-gray-900 p-2 rounded border">
+                  {callbackUrl}
+                </code>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => copyToClipboard(callbackUrl)}
+                  className="shrink-0"
+                >
+                  {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                </Button>
+              </div>
+              
+              {/* Avvisi specifici per ambiente */}
+              {isLocal && (
+                <Alert>
+                  <AlertDescription>
+                    ⚠️ <strong>Sviluppo locale:</strong> Questo URL funziona solo per il testing locale. 
+                    Quando pubblichi l'app, dovrai aggiornare l'URL callback nella console Atlassian.
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              {isReplit && (
+                <Alert>
+                  <AlertDescription>
+                    ✅ <strong>Replit:</strong> Questo URL è perfetto per la tua app Replit e 
+                    funzionerà sia in sviluppo che in produzione.
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
           </div>
 
