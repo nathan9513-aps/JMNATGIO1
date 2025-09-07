@@ -19,8 +19,8 @@ function Router() {
       <Sidebar />
       <div className="flex-1 md:ml-64">
         <Header />
-        <main className="p-4 max-w-full">
-          <div className="max-w-[1400px] mx-auto">
+        <main className="p-6 w-full">
+          <div className="w-full max-w-none">
             <Switch>
               <Route path="/" component={Dashboard} />
               <Route path="/dashboard" component={Dashboard} />

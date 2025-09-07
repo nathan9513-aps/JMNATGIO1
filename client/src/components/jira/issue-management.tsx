@@ -260,12 +260,12 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
                   Create Issue
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>Create New Issue</DialogTitle>
+                  <DialogTitle>Create New Jira Issue</DialogTitle>
                 </DialogHeader>
                 <Form {...createForm}>
-                  <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-4">
+                  <form onSubmit={createForm.handleSubmit(onCreateSubmit)} className="space-y-6">
                     <FormField
                       control={createForm.control}
                       name="projectKey"
@@ -336,7 +336,12 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
                         <FormItem>
                           <FormLabel>Description</FormLabel>
                           <FormControl>
-                            <Textarea {...field} rows={3} data-testid="issue-description-input" />
+                            <Textarea 
+                              {...field} 
+                              rows={4} 
+                              placeholder="Describe the issue in detail..."
+                              data-testid="issue-description-input" 
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -467,12 +472,12 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
                               <Edit className="w-4 h-4" />
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-md">
+                          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                             <DialogHeader>
                               <DialogTitle>Edit Issue {issue.key}</DialogTitle>
                             </DialogHeader>
                             <Form {...updateForm}>
-                              <form onSubmit={updateForm.handleSubmit(onUpdateSubmit)} className="space-y-4">
+                              <form onSubmit={updateForm.handleSubmit(onUpdateSubmit)} className="space-y-6">
                                 <FormField
                                   control={updateForm.control}
                                   name="summary"
