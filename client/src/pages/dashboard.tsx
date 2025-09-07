@@ -52,72 +52,64 @@ export default function Dashboard() {
         
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Today's Total</p>
-                  <TimerDisplay 
-                    durationSeconds={todayTotal} 
-                    className="text-3xl font-bold timer-display" 
-                  />
-                </div>
-                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <Clock className="text-primary text-xl" />
-                </div>
+          <div className="stat-card rounded-2xl p-6 fade-in">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Today's Total</p>
+                <TimerDisplay 
+                  durationSeconds={todayTotal} 
+                  className="text-3xl font-bold timer-display" 
+                />
               </div>
-            </CardContent>
-          </Card>
+              <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <Clock className="text-white text-xl" />
+              </div>
+            </div>
+          </div>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">This Week</p>
-                  <TimerDisplay 
-                    durationSeconds={weekTotal} 
-                    className="text-3xl font-bold timer-display" 
-                  />
-                </div>
-                <div className="w-12 h-12 bg-chart-2/10 rounded-lg flex items-center justify-center">
-                  <Calendar className="text-teal-600 text-xl" />
-                </div>
+          <div className="stat-card rounded-2xl p-6 fade-in" style={{ animationDelay: '0.1s' }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">This Week</p>
+                <TimerDisplay 
+                  durationSeconds={weekTotal} 
+                  className="text-3xl font-bold timer-display" 
+                />
               </div>
-            </CardContent>
-          </Card>
+              <div className="w-14 h-14 bg-gradient-to-br from-teal-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <Calendar className="text-white text-xl" />
+              </div>
+            </div>
+          </div>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Active Projects</p>
-                  <p className="text-3xl font-bold" data-testid="active-projects-stat">
-                    {summary?.activeProjects || 0}
-                  </p>
-                </div>
-                <div className="w-12 h-12 bg-chart-3/10 rounded-lg flex items-center justify-center">
-                  <BarChart3 className="text-blue-600 text-xl" />
-                </div>
+          <div className="stat-card rounded-2xl p-6 fade-in" style={{ animationDelay: '0.2s' }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Active Projects</p>
+                <p className="text-3xl font-bold" data-testid="active-projects-stat">
+                  {summary?.activeProjects || 0}
+                </p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <BarChart3 className="text-white text-xl" />
+              </div>
+            </div>
+          </div>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Billable Hours</p>
-                  <TimerDisplay 
-                    durationSeconds={summary?.billableSeconds || 0} 
-                    className="text-3xl font-bold timer-display" 
-                  />
-                </div>
-                <div className="w-12 h-12 bg-chart-4/10 rounded-lg flex items-center justify-center">
-                  <DollarSign className="text-yellow-600 text-xl" />
-                </div>
+          <div className="stat-card rounded-2xl p-6 fade-in" style={{ animationDelay: '0.3s' }}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-1">Billable Hours</p>
+                <TimerDisplay 
+                  durationSeconds={summary?.billableSeconds || 0} 
+                  className="text-3xl font-bold timer-display" 
+                />
               </div>
-            </CardContent>
-          </Card>
+              <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg">
+                <DollarSign className="text-white text-xl" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
