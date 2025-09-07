@@ -95,15 +95,9 @@ type CreateIssueFormData = z.infer<typeof createIssueSchema>;
 type CommentFormData = z.infer<typeof commentSchema>;
 type TransitionFormData = z.infer<typeof transitionSchema>;
 
-interface IssueManagementProps {
-  jiraConfig?: {
-    domain: string;
-    username: string;
-    apiToken: string;
-  };
-}
+interface IssueManagementProps {}
 
-export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
+export default function IssueManagement({}: IssueManagementProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIssue, setSelectedIssue] = useState<JiraIssue | null>(null);
   const [showUpdateDialog, setShowUpdateDialog] = useState(false);
@@ -119,19 +113,18 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
     queryFn: async () => {
       return await apiRequest('/api/jira/search-issues', {
         method: 'POST',
-        body: JSON.stringify({ query: searchQuery, jiraConfig })
+        body: JSON.stringify({ query: searchQuery })
       });
     },
-    enabled: !!searchQuery && !!jiraConfig,
+    enabled: !!searchQuery,
   });
 
   // Get projects for create form
   const { data: projects } = useQuery({
     queryKey: ['/api/jira/projects'],
     queryFn: async () => {
-      return await fetch(`/api/jira/projects?jiraConfig=${encodeURIComponent(JSON.stringify(jiraConfig))}`).then(r => r.json());
+      return await fetch('/api/jira/projects').then(r => r.json());
     },
-    enabled: !!jiraConfig,
   });
 
   // Update issue mutation
@@ -139,7 +132,7 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
     mutationFn: async (data: { issueKey: string; updateData: any }) => {
       const response = await apiRequest('/api/jira/update-issue', {
         method: 'POST',
-        body: JSON.stringify({ ...data, jiraConfig })
+        body: JSON.stringify(data)
       });
       return response;
     },
@@ -151,7 +144,7 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
     onError: () => {
       toast({ 
         title: "Failed to update issue", 
-        description: "Please check your Jira configuration and try again.",
+        description: "Please ensure Jira credentials are configured.",
         variant: "destructive" 
       });
     },
@@ -162,7 +155,7 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
     mutationFn: async (data: { issueData: any }) => {
       const response = await apiRequest('/api/jira/create-issue', {
         method: 'POST',
-        body: JSON.stringify({ ...data, jiraConfig })
+        body: JSON.stringify(data)
       });
       return response;
     },
@@ -177,7 +170,7 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
     onError: () => {
       toast({ 
         title: "Failed to create issue", 
-        description: "Please check your Jira configuration and try again.",
+        description: "Please ensure Jira credentials are configured.",
         variant: "destructive" 
       });
     },
@@ -190,10 +183,10 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
       if (!selectedIssue) return [];
       return await apiRequest('/api/jira/comments', {
         method: 'POST',
-        body: JSON.stringify({ issueKey: selectedIssue.key, jiraConfig })
+        body: JSON.stringify({ issueKey: selectedIssue.key })
       });
     },
-    enabled: !!selectedIssue && !!jiraConfig,
+    enabled: !!selectedIssue,
   });
 
   // Get transitions for selected issue
@@ -203,10 +196,10 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
       if (!selectedIssue) return [];
       return await apiRequest('/api/jira/transitions', {
         method: 'POST',
-        body: JSON.stringify({ issueKey: selectedIssue.key, jiraConfig })
+        body: JSON.stringify({ issueKey: selectedIssue.key })
       });
     },
-    enabled: !!selectedIssue && !!jiraConfig,
+    enabled: !!selectedIssue,
   });
 
   // Add comment mutation
@@ -214,7 +207,7 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
     mutationFn: async (data: { issueKey: string; comment: string }) => {
       return await apiRequest('/api/jira/add-comment', {
         method: 'POST',
-        body: JSON.stringify({ ...data, jiraConfig })
+        body: JSON.stringify(data)
       });
     },
     onSuccess: () => {
@@ -235,7 +228,7 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
     mutationFn: async (data: { issueKey: string; transitionId: string; comment?: string }) => {
       return await apiRequest('/api/jira/transition-issue', {
         method: 'POST',
-        body: JSON.stringify({ ...data, jiraConfig })
+        body: JSON.stringify(data)
       });
     },
     onSuccess: () => {
@@ -345,21 +338,6 @@ export default function IssueManagement({ jiraConfig }: IssueManagementProps) {
     }
   };
 
-  if (!jiraConfig) {
-    return (
-      <Card className="card-enhanced">
-        <CardContent className="p-6">
-          <div className="text-center">
-            <AlertCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Jira Configuration Required</h3>
-            <p className="text-muted-foreground">
-              Please configure your Jira settings in the Settings page to manage issues.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <div className="space-y-6">
