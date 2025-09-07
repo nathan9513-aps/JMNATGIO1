@@ -34,7 +34,7 @@ export default function AdminSetup() {
   const isReplit = window.location.hostname.includes('replit.dev') || window.location.hostname.includes('replit.app');
   const isLocal = window.location.hostname === 'localhost';
   
-  const callbackUrl = `${window.location.origin}/oauth/callback`;
+  const callbackUrl = `${window.location.origin}/oauth-callback`;
   
   const getDomainInfo = () => {
     if (isReplit) {
