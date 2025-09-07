@@ -110,9 +110,19 @@ export class JiraService {
   private config: JiraConfig;
   private baseUrl: string;
 
-  constructor(config: JiraConfig) {
-    this.config = config;
-    this.baseUrl = `https://${config.domain}.atlassian.net/rest/api/3`;
+  constructor(config?: JiraConfig) {
+    // Use environment variables if no config provided
+    this.config = config || {
+      domain: process.env.JIRA_DOMAIN!,
+      username: process.env.JIRA_USERNAME!,
+      apiToken: process.env.JIRA_API_TOKEN!
+    };
+    
+    if (!this.config.domain || !this.config.username || !this.config.apiToken) {
+      throw new Error('Jira configuration is incomplete. Please configure JIRA_DOMAIN, JIRA_USERNAME, and JIRA_API_TOKEN environment variables.');
+    }
+    
+    this.baseUrl = `https://${this.config.domain}.atlassian.net/rest/api/3`;
   }
 
   private getAuthHeader(): string {
@@ -271,6 +281,6 @@ export class JiraService {
   }
 }
 
-export function createJiraService(config: JiraConfig): JiraService {
+export function createJiraService(config?: JiraConfig): JiraService {
   return new JiraService(config);
 }

@@ -95,30 +95,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Jira integration
   app.post("/api/jira/search-issues", async (req, res) => {
     try {
-      const { query, jiraConfig } = req.body;
+      const { query } = req.body;
       
-      if (!jiraConfig || !jiraConfig.domain || !jiraConfig.username || !jiraConfig.apiToken) {
-        return res.status(400).json({ error: "Jira configuration is required" });
-      }
-
-      const jiraService = createJiraService(jiraConfig);
+      const jiraService = createJiraService();
       const issues = await jiraService.searchIssues(query);
       res.json(issues);
     } catch (error) {
       console.error("Jira search error:", error);
-      res.status(500).json({ error: "Failed to search Jira issues" });
+      res.status(500).json({ error: "Failed to search Jira issues. Please ensure Jira credentials are configured." });
     }
   });
 
   app.post("/api/jira/worklog", async (req, res) => {
     try {
-      const { issueKey, timeSpent, comment, started, jiraConfig } = req.body;
+      const { issueKey, timeSpent, comment, started } = req.body;
       
-      if (!jiraConfig || !jiraConfig.domain || !jiraConfig.username || !jiraConfig.apiToken) {
-        return res.status(400).json({ error: "Jira configuration is required" });
-      }
-
-      const jiraService = createJiraService(jiraConfig);
+      const jiraService = createJiraService();
       const worklog = await jiraService.addWorklog(issueKey, {
         timeSpent,
         comment,
@@ -128,128 +120,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(worklog);
     } catch (error) {
       console.error("Jira worklog error:", error);
-      res.status(500).json({ error: "Failed to create Jira worklog" });
+      res.status(500).json({ error: "Failed to create Jira worklog. Please ensure Jira credentials are configured." });
     }
   });
 
   app.get("/api/jira/projects", async (req, res) => {
     try {
-      const { jiraConfig } = req.query;
-      
-      if (!jiraConfig) {
-        return res.status(400).json({ error: "Jira configuration is required" });
-      }
-
-      const config = JSON.parse(jiraConfig as string);
-      const jiraService = createJiraService(config);
+      const jiraService = createJiraService();
       const projects = await jiraService.getProjects();
       res.json(projects);
     } catch (error) {
       console.error("Jira projects error:", error);
-      res.status(500).json({ error: "Failed to fetch Jira projects" });
+      res.status(500).json({ error: "Failed to fetch Jira projects. Please ensure Jira credentials are configured." });
     }
   });
 
   // Get single Jira issue
   app.post("/api/jira/get-issue", async (req, res) => {
     try {
-      const { issueKey, jiraConfig } = req.body;
+      const { issueKey } = req.body;
       
-      if (!jiraConfig) {
-        return res.status(400).json({ error: "Jira configuration is required" });
-      }
-
-      const jiraService = createJiraService(jiraConfig);
+      const jiraService = createJiraService();
       const issue = await jiraService.getIssue(issueKey);
       res.json(issue);
     } catch (error) {
       console.error("Jira get issue error:", error);
-      res.status(500).json({ error: "Failed to get Jira issue" });
+      res.status(500).json({ error: "Failed to get Jira issue. Please ensure Jira credentials are configured." });
     }
   });
 
   // Update Jira issue
   app.post("/api/jira/update-issue", async (req, res) => {
     try {
-      const { issueKey, updateData, jiraConfig } = req.body;
+      const { issueKey, updateData } = req.body;
       
-      if (!jiraConfig) {
-        return res.status(400).json({ error: "Jira configuration is required" });
-      }
-
-      const jiraService = createJiraService(jiraConfig);
+      const jiraService = createJiraService();
       const result = await jiraService.updateIssue(issueKey, updateData);
       res.json({ success: true, result });
     } catch (error) {
       console.error("Jira update issue error:", error);
-      res.status(500).json({ error: "Failed to update Jira issue" });
+      res.status(500).json({ error: "Failed to update Jira issue. Please ensure Jira credentials are configured." });
     }
   });
 
   // Create new Jira issue
   app.post("/api/jira/create-issue", async (req, res) => {
     try {
-      const { issueData, jiraConfig } = req.body;
+      const { issueData } = req.body;
       
-      if (!jiraConfig) {
-        return res.status(400).json({ error: "Jira configuration is required" });
-      }
-
-      const jiraService = createJiraService(jiraConfig);
+      const jiraService = createJiraService();
       const result = await jiraService.createIssue(issueData);
       res.json(result);
     } catch (error) {
       console.error("Jira create issue error:", error);
-      res.status(500).json({ error: "Failed to create Jira issue" });
+      res.status(500).json({ error: "Failed to create Jira issue. Please ensure Jira credentials are configured." });
     }
   });
 
   // Get issue types for a project
   app.post("/api/jira/issue-types", async (req, res) => {
     try {
-      const { projectKey, jiraConfig } = req.body;
+      const { projectKey } = req.body;
       
-      if (!jiraConfig) {
-        return res.status(400).json({ error: "Jira configuration is required" });
-      }
-
-      const jiraService = createJiraService(jiraConfig);
+      const jiraService = createJiraService();
       const issueTypes = await jiraService.getIssueTypes(projectKey);
       res.json(issueTypes);
     } catch (error) {
       console.error("Jira issue types error:", error);
-      res.status(500).json({ error: "Failed to fetch issue types" });
+      res.status(500).json({ error: "Failed to fetch issue types. Please ensure Jira credentials are configured." });
     }
   });
 
   // Get transitions for an issue
   app.post("/api/jira/transitions", async (req, res) => {
     try {
-      const { issueKey, jiraConfig } = req.body;
+      const { issueKey } = req.body;
       
-      if (!jiraConfig) {
-        return res.status(400).json({ error: "Jira configuration is required" });
-      }
-
-      const jiraService = createJiraService(jiraConfig);
+      const jiraService = createJiraService();
       const transitions = await jiraService.getIssueTransitions(issueKey);
       res.json(transitions);
     } catch (error) {
       console.error("Jira transitions error:", error);
-      res.status(500).json({ error: "Failed to fetch transitions" });
+      res.status(500).json({ error: "Failed to fetch transitions. Please ensure Jira credentials are configured." });
     }
   });
 
   // Transition an issue (change status, close, etc.)
   app.post("/api/jira/transition-issue", async (req, res) => {
     try {
-      const { issueKey, transitionId, comment, jiraConfig } = req.body;
+      const { issueKey, transitionId, comment } = req.body;
       
-      if (!jiraConfig) {
-        return res.status(400).json({ error: "Jira configuration is required" });
-      }
-
-      const jiraService = createJiraService(jiraConfig);
+      const jiraService = createJiraService();
       const transitionData = {
         transition: { id: transitionId },
         ...(comment && { comment: { body: comment } })
@@ -259,43 +220,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true });
     } catch (error) {
       console.error("Jira transition issue error:", error);
-      res.status(500).json({ error: "Failed to transition issue" });
+      res.status(500).json({ error: "Failed to transition issue. Please ensure Jira credentials are configured." });
     }
   });
 
   // Get comments for an issue
   app.post("/api/jira/comments", async (req, res) => {
     try {
-      const { issueKey, jiraConfig } = req.body;
+      const { issueKey } = req.body;
       
-      if (!jiraConfig) {
-        return res.status(400).json({ error: "Jira configuration is required" });
-      }
-
-      const jiraService = createJiraService(jiraConfig);
+      const jiraService = createJiraService();
       const comments = await jiraService.getComments(issueKey);
       res.json(comments);
     } catch (error) {
       console.error("Jira comments error:", error);
-      res.status(500).json({ error: "Failed to fetch comments" });
+      res.status(500).json({ error: "Failed to fetch comments. Please ensure Jira credentials are configured." });
     }
   });
 
   // Add comment to an issue
   app.post("/api/jira/add-comment", async (req, res) => {
     try {
-      const { issueKey, comment, jiraConfig } = req.body;
+      const { issueKey, comment } = req.body;
       
-      if (!jiraConfig) {
-        return res.status(400).json({ error: "Jira configuration is required" });
-      }
-
-      const jiraService = createJiraService(jiraConfig);
+      const jiraService = createJiraService();
       const result = await jiraService.addComment(issueKey, { body: comment });
       res.json(result);
     } catch (error) {
       console.error("Jira add comment error:", error);
-      res.status(500).json({ error: "Failed to add comment" });
+      res.status(500).json({ error: "Failed to add comment. Please ensure Jira credentials are configured." });
     }
   });
 
