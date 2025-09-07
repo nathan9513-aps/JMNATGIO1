@@ -503,13 +503,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Jira OAuth endpoints
   app.get("/api/jira/oauth/auth-url", async (req, res) => {
     try {
-      if (!process.env.JIRA_OAUTH_CLIENT_ID) {
-        return res.status(400).json({ 
-          error: "OAuth not configured", 
-          message: "Jira OAuth Client ID not configured. Please set JIRA_OAUTH_CLIENT_ID environment variable." 
-        });
-      }
-
       const oauthService = await createJiraOAuthService();
       
       if (!oauthService) {
