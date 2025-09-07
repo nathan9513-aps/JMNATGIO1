@@ -432,8 +432,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Save credentials in storage
-      await storage.setAppSetting("JIRA_OAUTH_CLIENT_ID", clientId);
-      await storage.setAppSetting("JIRA_OAUTH_CLIENT_SECRET", clientSecret);
+      console.log("Saving OAuth credentials:", { clientId: clientId.substring(0, 10) + "...", clientSecret: "***" });
+      const savedClientId = await storage.setAppSetting("JIRA_OAUTH_CLIENT_ID", clientId);
+      const savedClientSecret = await storage.setAppSetting("JIRA_OAUTH_CLIENT_SECRET", clientSecret);
+      console.log("Saved successfully:", { clientId: !!savedClientId, clientSecret: !!savedClientSecret });
       
       res.json({ 
         success: true, 
@@ -449,6 +451,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const clientId = await storage.getAppSetting("JIRA_OAUTH_CLIENT_ID");
       const clientSecret = await storage.getAppSetting("JIRA_OAUTH_CLIENT_SECRET");
+      
+      console.log("Checking OAuth config:", { 
+        clientId: clientId?.value ? clientId.value.substring(0, 10) + "..." : "not found", 
+        clientSecret: clientSecret?.value ? "***" : "not found" 
+      });
       
       res.json({
         configured: !!(clientId?.value && clientSecret?.value),
@@ -504,6 +511,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const oauthService = await createJiraOAuthService();
+      
+      if (!oauthService) {
+        return res.status(400).json({ 
+          error: "OAuth not configured", 
+          message: "OAuth credentials not found. Please configure OAuth in admin setup." 
+        });
+      }
+      
       const state = Math.random().toString(36).substring(2, 15);
       
       // Store state in session or memory for validation (in production, use proper session storage)
@@ -525,6 +540,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const oauthService = await createJiraOAuthService();
+      
+      if (!oauthService) {
+        return res.status(400).json({ 
+          error: "OAuth not configured", 
+          message: "OAuth credentials not found. Please configure OAuth in admin setup." 
+        });
+      }
       
       // Exchange code for tokens
       const tokens = await oauthService.exchangeCodeForTokens(code);
