@@ -146,7 +146,9 @@ export async function createJiraOAuthService(): Promise<JiraOAuthService | null>
     return null;
   }
   
-  // Determine base URL - check if we're in a Replit environment
+  // Determine base URL - use deployment domain
+  const deploymentDomain = 'jira-time-1.replit.app';
+  const customDomain = process.env.REPLIT_CUSTOM_DOMAIN;
   const replId = process.env.REPL_ID;
   const replOwner = process.env.REPL_OWNER;
   const replSlug = process.env.REPL_SLUG;
@@ -154,9 +156,13 @@ export async function createJiraOAuthService(): Promise<JiraOAuthService | null>
   let hostname: string;
   let baseUrl: string;
   
-  if (replId && replOwner && replSlug) {
-    // Replit environment - use the proper replit.dev domain
-    hostname = `${replSlug}.${replOwner}.repl.co`;
+  if (customDomain) {
+    // Use custom domain (for deployment)
+    hostname = customDomain;
+    baseUrl = `https://${hostname}`;
+  } else if (replId && replOwner && replSlug) {
+    // Use deployment domain for OAuth callback
+    hostname = deploymentDomain;
     baseUrl = `https://${hostname}`;
   } else {
     // Local development
@@ -170,6 +176,8 @@ export async function createJiraOAuthService(): Promise<JiraOAuthService | null>
     hostname,
     baseUrl,
     redirectUri,
+    deploymentDomain,
+    customDomain,
     replId,
     replOwner,
     replSlug,
