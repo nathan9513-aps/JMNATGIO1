@@ -28,7 +28,7 @@ export default function Sidebar() {
             </h1>
             <div className="flex items-center space-x-1">
               <Sparkles className="w-2 h-2 text-primary/70" />
-              <p className="text-xs text-muted-foreground font-medium">v2.1.0</p>
+              <p className="text-xs text-muted-foreground font-medium">v1.1.0</p>
             </div>
           </div>
         </div>
@@ -61,19 +61,33 @@ export default function Sidebar() {
 
       {/* Connection Status */}
       <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Jira Cloud</span>
-            <div className="flex items-center space-x-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-green-600">Connected</span>
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Jira Cloud</span>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-green-600">Connected</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">FileMaker DB</span>
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-green-600">Connected</span>
+              </div>
             </div>
           </div>
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">FileMaker DB</span>
-            <div className="flex items-center space-x-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-green-600">Connected</span>
+          
+          {/* Copyright and Build Info */}
+          <div className="pt-2 border-t border-border/50">
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground/80 font-medium">
+                © 2025 NatCios Software
+              </p>
+              <p className="text-xs text-muted-foreground/60 mt-1">
+                Build 1.14621.0_zinc_prerelease
+              </p>
             </div>
           </div>
         </div>
