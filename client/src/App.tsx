@@ -15,23 +15,21 @@ import Header from "@/components/layout/header";
 
 function Router() {
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex w-full">
       <Sidebar />
-      <div className="flex-1 md:ml-64">
+      <div className="flex-1 w-full min-w-0">
         <Header />
-        <main className="p-6 w-full">
-          <div className="w-full max-w-none">
-            <Switch>
-              <Route path="/" component={Dashboard} />
-              <Route path="/dashboard" component={Dashboard} />
-              <Route path="/time-tracking" component={TimeTracking} />
-              <Route path="/clients" component={Clients} />
-              <Route path="/projects" component={Projects} />
-              <Route path="/reports" component={Reports} />
-              <Route path="/settings" component={Settings} />
-              <Route component={NotFound} />
-            </Switch>
-          </div>
+        <main className="p-4 w-full">
+          <Switch>
+            <Route path="/" component={Dashboard} />
+            <Route path="/dashboard" component={Dashboard} />
+            <Route path="/time-tracking" component={TimeTracking} />
+            <Route path="/clients" component={Clients} />
+            <Route path="/projects" component={Projects} />
+            <Route path="/reports" component={Reports} />
+            <Route path="/settings" component={Settings} />
+            <Route component={NotFound} />
+          </Switch>
         </main>
       </div>
     </div>

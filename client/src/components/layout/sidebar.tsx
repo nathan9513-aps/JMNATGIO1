@@ -15,20 +15,20 @@ export default function Sidebar() {
   const [location] = useLocation();
 
   return (
-    <div className="sidebar fixed md:static inset-y-0 left-0 z-50 w-64 bg-card border-r border-border shadow-lg backdrop-blur-sm">
+    <div className="sidebar fixed md:static inset-y-0 left-0 z-50 w-56 bg-card border-r border-border shadow-lg backdrop-blur-sm">
       {/* Logo and Title */}
-      <div className="p-6 border-b border-border bg-gradient-to-r from-primary/5 to-purple-500/5">
-        <div className="flex items-center space-x-3 fade-in">
-          <div className="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center shadow-lg">
-            <Clock className="w-7 h-7 text-primary-foreground" />
+      <div className="p-4 border-b border-border bg-gradient-to-r from-primary/5 to-purple-500/5">
+        <div className="flex items-center space-x-2 fade-in">
+          <div className="w-10 h-10 gradient-primary rounded-lg flex items-center justify-center shadow-lg">
+            <Clock className="w-6 h-6 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-              Jira Time Tracker
+            <h1 className="text-base font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              Jira Tracker
             </h1>
             <div className="flex items-center space-x-1">
-              <Sparkles className="w-3 h-3 text-primary/70" />
-              <p className="text-sm text-muted-foreground font-medium">v2.1.0</p>
+              <Sparkles className="w-2 h-2 text-primary/70" />
+              <p className="text-xs text-muted-foreground font-medium">v2.1.0</p>
             </div>
           </div>
         </div>

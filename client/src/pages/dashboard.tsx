@@ -47,12 +47,12 @@ export default function Dashboard() {
   );
 
   return (
-    <div>
+    <div className="w-full">
       <div className="mb-8">
         <h2 className="text-2xl font-bold mb-6">Time Tracking Dashboard</h2>
         
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
           <div className="stat-card rounded-2xl p-6 fade-in">
             <div className="flex items-center justify-between">
               <div>
