@@ -23,8 +23,8 @@ export default function Header() {
 
   return (
     <>
-      <header className="bg-card border-b border-border px-6 py-4">
-        <div className="flex items-center justify-between">
+      <header className="bg-card border-b border-border px-4 py-4 w-full">
+        <div className="flex items-center justify-between w-full">
           <Button
             variant="ghost"
             size="sm"

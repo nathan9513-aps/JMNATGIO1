@@ -76,6 +76,11 @@
     font-variant-numeric: tabular-nums;
   }
 
+  .full-width-layout {
+    width: 100vw;
+    max-width: none !important;
+  }
+
   .gradient-primary {
     background: var(--gradient-primary);
   }

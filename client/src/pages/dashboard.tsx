@@ -47,7 +47,7 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="w-full">
+    <div className="w-full full-width-layout">
       <div className="mb-8">
         <h2 className="text-2xl font-bold mb-6">Time Tracking Dashboard</h2>
         

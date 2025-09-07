@@ -19,7 +19,7 @@ function Router() {
       <Sidebar />
       <div className="flex-1 w-full min-w-0">
         <Header />
-        <main className="p-4 w-full">
+        <main className="p-4 w-full full-width-layout">
           <Switch>
             <Route path="/" component={Dashboard} />
             <Route path="/dashboard" component={Dashboard} />
