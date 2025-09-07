@@ -132,9 +132,14 @@ export default function QuickTimeEntry() {
   };
 
   return (
-    <Card>
+    <Card className="card-enhanced rounded-2xl">
       <CardHeader>
-        <CardTitle>Quick Time Entry</CardTitle>
+        <CardTitle className="flex items-center space-x-2">
+          <div className="w-8 h-8 gradient-primary rounded-lg flex items-center justify-center">
+            <Plus className="w-4 h-4 text-primary-foreground" />
+          </div>
+          <span>Quick Time Entry</span>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <Form {...form}>

@@ -38,19 +38,20 @@ export default function Header() {
           <div className="flex items-center space-x-4">
             {/* Current Timer Display */}
             {runningEntry && (
-              <div className="bg-primary/10 border border-primary/20 rounded-lg px-4 py-2">
+              <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 border border-primary/20 rounded-xl px-4 py-3 shadow-lg backdrop-blur-sm">
                 <div className="flex items-center space-x-3">
                   <div className="flex items-center space-x-2">
-                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm font-medium">Currently Tracking</span>
+                    <div className="w-2 h-2 bg-red-500 rounded-full running-indicator"></div>
+                    <span className="text-sm font-semibold">Currently Tracking</span>
                   </div>
                   <TimerDisplay 
                     startTime={runningEntry.startTime} 
-                    className="text-2xl font-bold text-primary" 
+                    className="text-2xl font-bold timer-glow" 
                   />
                   <Button
                     variant="destructive"
                     size="sm"
+                    className="shadow-md hover:shadow-lg transition-shadow"
                     data-testid="stop-timer-button"
                   >
                     <Square className="w-4 h-4 mr-1" />

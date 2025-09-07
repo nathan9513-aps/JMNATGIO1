@@ -48,10 +48,15 @@ export default function MappingTable() {
   }
 
   return (
-    <Card>
+    <Card className="card-enhanced rounded-2xl">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Client-Project Mappings</CardTitle>
+          <CardTitle className="flex items-center space-x-2">
+            <div className="w-8 h-8 gradient-primary rounded-lg flex items-center justify-center">
+              <LinkIcon className="w-4 h-4 text-primary-foreground" />
+            </div>
+            <span>Client-Project Mappings</span>
+          </CardTitle>
           <Button data-testid="add-mapping-button">
             <LinkIcon className="w-4 h-4 mr-2" />
             Add Mapping
