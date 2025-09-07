@@ -147,6 +147,6 @@ export async function createJiraOAuthService(): Promise<JiraOAuthService | null>
   return new JiraOAuthService({
     clientId: clientIdSetting.value,
     clientSecret: clientSecretSetting.value,
-    redirectUri: `${baseUrl}/oauth/callback`,
+    redirectUri: `${baseUrl}/oauth-callback`,
   });
 }
