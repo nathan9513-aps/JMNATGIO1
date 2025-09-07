@@ -78,7 +78,7 @@ export default function Settings() {
         <p className="text-muted-foreground mt-2">
           Configure your Jira Cloud credentials to enable issue management and time tracking.
         </p>
-        {jiraCredentials?.configured && (
+        {jiraCredentials && (jiraCredentials as any).configured && (
           <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
             <p className="text-sm text-green-800 dark:text-green-200">
               ✓ Jira credentials are configured and working
