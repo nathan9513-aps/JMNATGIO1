@@ -13,6 +13,61 @@ import {
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Debug middleware to log ALL incoming requests
+  app.use('*', (req, res, next) => {
+    if (!req.originalUrl.includes('/api/time-entries/running')) {
+      console.log(`🌍 [${new Date().toISOString()}] ${req.method} ${req.originalUrl}`, {
+        userAgent: req.headers['user-agent'],
+        query: req.query,
+        params: req.params
+      });
+    }
+    next();
+  });
+
+  // OAuth callback endpoint (backend) - handles Atlassian redirect
+  app.get("/oauth-callback", async (req, res) => {
+    console.log("🔐 OAuth callback received:", req.query);
+    
+    const { code, state, error } = req.query;
+    
+    if (error) {
+      console.error("OAuth error:", error);
+      return res.redirect(`/settings?error=${encodeURIComponent(error as string)}`);
+    }
+    
+    if (!code) {
+      console.error("No authorization code received");
+      return res.redirect("/settings?error=no_code");
+    }
+    
+    try {
+      console.log("Exchanging code for token...");
+      const oauthService = await createJiraOAuthService();
+      
+      if (!oauthService) {
+        console.error("OAuth service not configured");
+        return res.redirect("/settings?error=oauth_not_configured");
+      }
+      
+      const tokens = await oauthService.exchangeCodeForTokens(code as string);
+      console.log("Token exchange successful:", { has_access_token: !!tokens.access_token });
+      
+      // Save tokens to database
+      await storage.setAppSetting("JIRA_OAUTH_ACCESS_TOKEN", tokens.access_token);
+      if (tokens.refresh_token) {
+        await storage.setAppSetting("JIRA_OAUTH_REFRESH_TOKEN", tokens.refresh_token);
+      }
+      
+      console.log("✅ OAuth authentication successful!");
+      return res.redirect("/settings?success=oauth_connected");
+      
+    } catch (error) {
+      console.error("OAuth token exchange failed:", error);
+      return res.redirect(`/settings?error=${encodeURIComponent('token_exchange_failed')}`);
+    }
+  });
+
   // Auth routes
   app.post("/api/auth/login", async (req, res) => {
     try {
