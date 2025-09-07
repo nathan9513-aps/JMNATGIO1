@@ -10,7 +10,9 @@ import {
   type TimeEntry,
   type InsertTimeEntry,
   type JiraIssue,
-  type InsertJiraIssue
+  type InsertJiraIssue,
+  type AppSetting,
+  type InsertAppSetting
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 
@@ -55,6 +57,11 @@ export interface IStorage {
   getJiraIssue(jiraIssueKey: string): Promise<JiraIssue | undefined>;
   createJiraIssue(issue: InsertJiraIssue): Promise<JiraIssue>;
   updateJiraIssue(jiraIssueKey: string, issue: Partial<JiraIssue>): Promise<JiraIssue>;
+
+  // App Settings
+  getAppSetting(key: string): Promise<AppSetting | undefined>;
+  setAppSetting(key: string, value: string): Promise<AppSetting>;
+  deleteAppSetting(key: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -64,6 +71,7 @@ export class MemStorage implements IStorage {
   private clientProjectMappings: Map<string, ClientProjectMapping> = new Map();
   private timeEntries: Map<string, TimeEntry> = new Map();
   private jiraIssues: Map<string, JiraIssue> = new Map();
+  private appSettings: Map<string, AppSetting> = new Map();
 
   constructor() {
     // Initialize with some default data
@@ -245,6 +253,27 @@ export class MemStorage implements IStorage {
     return Array.from(this.timeEntries.values()).find(
       entry => entry.userId === userId && entry.isRunning
     );
+  }
+
+  // App Settings
+  async getAppSetting(key: string): Promise<AppSetting | undefined> {
+    return this.appSettings.get(key);
+  }
+
+  async setAppSetting(key: string, value: string): Promise<AppSetting> {
+    const setting: AppSetting = {
+      id: randomUUID(),
+      key: key,
+      value: value,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.appSettings.set(key, setting);
+    return setting;
+  }
+
+  async deleteAppSetting(key: string): Promise<boolean> {
+    return this.appSettings.delete(key);
   }
 
   // Jira Issues

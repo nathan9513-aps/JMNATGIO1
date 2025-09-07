@@ -76,6 +76,15 @@ export const jiraIssues = pgTable("jira_issues", {
   lastSynced: timestamp("last_synced").default(sql`now()`),
 });
 
+// App settings for OAuth configuration
+export const appSettings = pgTable("app_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  key: text("key").notNull().unique(),
+  value: text("value"),
+  createdAt: timestamp("created_at").default(sql`now()`),
+  updatedAt: timestamp("updated_at").default(sql`now()`),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -106,6 +115,12 @@ export const insertJiraIssueSchema = createInsertSchema(jiraIssues).omit({
   lastSynced: true,
 });
 
+export const insertAppSettingSchema = createInsertSchema(appSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -119,3 +134,5 @@ export type TimeEntry = typeof timeEntries.$inferSelect;
 export type InsertTimeEntry = z.infer<typeof insertTimeEntrySchema>;
 export type JiraIssue = typeof jiraIssues.$inferSelect;
 export type InsertJiraIssue = z.infer<typeof insertJiraIssueSchema>;
+export type AppSetting = typeof appSettings.$inferSelect;
+export type InsertAppSetting = z.infer<typeof insertAppSettingSchema>;
