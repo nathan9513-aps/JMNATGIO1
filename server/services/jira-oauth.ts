@@ -41,7 +41,15 @@ export class JiraOAuthService {
       prompt: 'consent'
     });
 
-    return `${this.baseAuthUrl}/authorize?${params.toString()}`;
+    const authUrl = `${this.baseAuthUrl}/authorize?${params.toString()}`;
+    
+    console.log("Generated OAuth URL:", {
+      redirect_uri: this.config.redirectUri,
+      client_id: this.config.clientId.substring(0, 10) + "...",
+      authUrl: authUrl.substring(0, 100) + "..."
+    });
+
+    return authUrl;
   }
 
   // Exchange authorization code for tokens
@@ -144,9 +152,18 @@ export async function createJiraOAuthService(): Promise<JiraOAuthService | null>
     ? `https://${hostname}` 
     : `http://${hostname}`;
   
+  const redirectUri = `${baseUrl}/oauth-callback`;
+  
+  console.log("OAuth Service Debug:", {
+    hostname,
+    baseUrl,
+    redirectUri,
+    replit_domain: process.env.REPLIT_DOMAIN
+  });
+  
   return new JiraOAuthService({
     clientId: clientIdSetting.value,
     clientSecret: clientSecretSetting.value,
-    redirectUri: `${baseUrl}/oauth-callback`,
+    redirectUri,
   });
 }
