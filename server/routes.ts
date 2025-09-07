@@ -400,6 +400,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Jira credentials management
+  app.get("/api/jira/credentials", async (req, res) => {
+    try {
+      const hasCredentials = !!(
+        process.env.JIRA_DOMAIN && 
+        process.env.JIRA_USERNAME && 
+        process.env.JIRA_API_TOKEN
+      );
+      
+      res.json({
+        configured: hasCredentials,
+        domain: process.env.JIRA_DOMAIN ? "****" : "",
+        username: process.env.JIRA_USERNAME ? "****" : "",
+        apiToken: process.env.JIRA_API_TOKEN ? "****" : ""
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to check Jira credentials" });
+    }
+  });
+
+  app.post("/api/jira/credentials", async (req, res) => {
+    try {
+      const { jiraDomain, jiraUsername, jiraApiToken } = req.body;
+      
+      if (!jiraDomain || !jiraUsername || !jiraApiToken) {
+        return res.status(400).json({ error: "All Jira credentials are required" });
+      }
+
+      // Update environment variables for the current session
+      process.env.JIRA_DOMAIN = jiraDomain;
+      process.env.JIRA_USERNAME = jiraUsername;
+      process.env.JIRA_API_TOKEN = jiraApiToken;
+
+      // Test the credentials by trying to fetch projects
+      try {
+        const jiraService = createJiraService();
+        await jiraService.getProjects();
+      } catch (error) {
+        return res.status(400).json({ error: "Invalid Jira credentials. Please check your domain, username, and API token." });
+      }
+
+      res.json({ 
+        success: true, 
+        message: "Jira credentials saved successfully",
+        note: "Credentials are saved for this session. For permanent storage, please set them as environment variables."
+      });
+    } catch (error) {
+      console.error("Jira credentials save error:", error);
+      res.status(500).json({ error: "Failed to save Jira credentials" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

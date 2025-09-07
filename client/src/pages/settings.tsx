@@ -10,68 +10,82 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-const settingsSchema = z.object({
+const jiraCredentialsSchema = z.object({
   jiraDomain: z.string().min(1, "Jira domain is required"),
   jiraUsername: z.string().email("Valid email is required"),
   jiraApiToken: z.string().min(1, "API token is required"),
-  filemakerHost: z.string().min(1, "FileMaker host is required"),
-  filemakerDatabase: z.string().min(1, "Database name is required"),
-  filemakerUsername: z.string().min(1, "Username is required"),
-  filemakerPassword: z.string().min(1, "Password is required"),
 });
 
-type SettingsData = z.infer<typeof settingsSchema>;
+type JiraCredentialsData = z.infer<typeof jiraCredentialsSchema>;
 
 export default function Settings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: user } = useQuery({
-    queryKey: ["/api/user/default-user"],
-    enabled: false,
+  const { data: jiraCredentials, isLoading } = useQuery({
+    queryKey: ["/api/jira/credentials"],
   });
 
-  const form = useForm<SettingsData>({
-    resolver: zodResolver(settingsSchema),
+  const form = useForm<JiraCredentialsData>({
+    resolver: zodResolver(jiraCredentialsSchema),
     defaultValues: {
-      jiraDomain: user?.jiraDomain || "",
-      jiraUsername: user?.jiraUsername || "",
-      jiraApiToken: user?.jiraApiToken || "",
-      filemakerHost: user?.filemakerHost || "",
-      filemakerDatabase: user?.filemakerDatabase || "",
-      filemakerUsername: user?.filemakerUsername || "",
-      filemakerPassword: user?.filemakerPassword || "",
+      jiraDomain: "",
+      jiraUsername: "",
+      jiraApiToken: "",
     },
   });
 
-  const updateSettingsMutation = useMutation({
-    mutationFn: async (data: SettingsData) => {
-      const response = await apiRequest("PUT", "/api/user/default-user/settings", data);
-      return response.json();
+  const updateCredentialsMutation = useMutation({
+    mutationFn: async (data: JiraCredentialsData) => {
+      return await apiRequest("/api/jira/credentials", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
     },
     onSuccess: () => {
       toast({
-        title: "Settings saved",
-        description: "Your configuration has been updated successfully",
+        title: "Credentials saved",
+        description: "Your Jira configuration has been updated successfully",
       });
-      queryClient.invalidateQueries({ queryKey: ["/api/user/default-user"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/jira/credentials"] });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: "Error",
-        description: "Failed to save settings",
+        description: error?.message || "Failed to save Jira credentials",
         variant: "destructive",
       });
     },
   });
 
-  const onSubmit = (data: SettingsData) => {
-    updateSettingsMutation.mutate(data);
+  const onSubmit = (data: JiraCredentialsData) => {
+    updateCredentialsMutation.mutate(data);
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold">Jira Configuration</h2>
+        <p>Loading credentials...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Settings</h2>
+      <div>
+        <h2 className="text-2xl font-bold">Jira Configuration</h2>
+        <p className="text-muted-foreground mt-2">
+          Configure your Jira Cloud credentials to enable issue management and time tracking.
+        </p>
+        {jiraCredentials?.configured && (
+          <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <p className="text-sm text-green-800 dark:text-green-200">
+              ✓ Jira credentials are configured and working
+            </p>
+          </div>
+        )}
+      </div>
       
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -131,99 +145,31 @@ export default function Settings() {
                       />
                     </FormControl>
                     <FormMessage />
+                    <p className="text-sm text-muted-foreground">
+                      Create an API token at:{" "}
+                      <a 
+                        href="https://id.atlassian.com/manage-profile/security/api-tokens"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        https://id.atlassian.com/manage-profile/security/api-tokens
+                      </a>
+                    </p>
                   </FormItem>
                 )}
               />
             </CardContent>
           </Card>
 
-          <Separator />
-
-          {/* FileMaker Configuration */}
-          <Card>
-            <CardHeader>
-              <CardTitle>FileMaker Configuration</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="filemakerHost"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>FileMaker Server Host</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="your-filemaker-server.com" 
-                        {...field}
-                        data-testid="filemaker-host-input"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="filemakerDatabase"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Database Name</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="ClientDatabase" 
-                        {...field}
-                        data-testid="filemaker-database-input"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="filemakerUsername"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="filemaker-username" 
-                        {...field}
-                        data-testid="filemaker-username-input"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="filemakerPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="filemaker-password" 
-                        {...field}
-                        data-testid="filemaker-password-input"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
 
           <Button 
             type="submit" 
             className="w-full"
-            disabled={updateSettingsMutation.isPending}
-            data-testid="save-settings-button"
+            disabled={updateCredentialsMutation.isPending}
+            data-testid="save-jira-credentials-button"
           >
-            {updateSettingsMutation.isPending ? "Saving..." : "Save Settings"}
+            {updateCredentialsMutation.isPending ? "Saving..." : "Save Jira Credentials"}
           </Button>
         </form>
       </Form>
