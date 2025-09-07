@@ -19,17 +19,19 @@ function Router() {
       <Sidebar />
       <div className="flex-1 md:ml-64">
         <Header />
-        <main className="p-6">
-          <Switch>
-            <Route path="/" component={Dashboard} />
-            <Route path="/dashboard" component={Dashboard} />
-            <Route path="/time-tracking" component={TimeTracking} />
-            <Route path="/clients" component={Clients} />
-            <Route path="/projects" component={Projects} />
-            <Route path="/reports" component={Reports} />
-            <Route path="/settings" component={Settings} />
-            <Route component={NotFound} />
-          </Switch>
+        <main className="p-4 max-w-full">
+          <div className="max-w-[1400px] mx-auto">
+            <Switch>
+              <Route path="/" component={Dashboard} />
+              <Route path="/dashboard" component={Dashboard} />
+              <Route path="/time-tracking" component={TimeTracking} />
+              <Route path="/clients" component={Clients} />
+              <Route path="/projects" component={Projects} />
+              <Route path="/reports" component={Reports} />
+              <Route path="/settings" component={Settings} />
+              <Route component={NotFound} />
+            </Switch>
+          </div>
         </main>
       </div>
     </div>
