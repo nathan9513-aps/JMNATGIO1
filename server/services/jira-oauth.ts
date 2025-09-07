@@ -126,17 +126,27 @@ export class JiraOAuthService {
   }
 }
 
-// Create OAuth service instance
-export function createJiraOAuthService(): JiraOAuthService {
-  const config = {
-    clientId: process.env.JIRA_OAUTH_CLIENT_ID!,
-    clientSecret: process.env.JIRA_OAUTH_CLIENT_SECRET!,
-    redirectUri: process.env.JIRA_OAUTH_REDIRECT_URI!,
-  };
-
-  if (!config.clientId || !config.clientSecret || !config.redirectUri) {
-    throw new Error('Jira OAuth configuration is incomplete. Please configure JIRA_OAUTH_CLIENT_ID, JIRA_OAUTH_CLIENT_SECRET, and JIRA_OAUTH_REDIRECT_URI environment variables.');
+// Create OAuth service instance with stored credentials
+export async function createJiraOAuthService(): Promise<JiraOAuthService | null> {
+  // Import storage dynamically to avoid circular dependencies
+  const { storage } = await import('../storage');
+  
+  const clientIdSetting = await storage.getAppSetting("JIRA_OAUTH_CLIENT_ID");
+  const clientSecretSetting = await storage.getAppSetting("JIRA_OAUTH_CLIENT_SECRET");
+  
+  if (!clientIdSetting?.value || !clientSecretSetting?.value) {
+    return null;
   }
-
-  return new JiraOAuthService(config);
+  
+  // Determine base URL - check if we're in a Replit environment
+  const hostname = process.env.REPLIT_DOMAIN || 'localhost:5000';
+  const baseUrl = hostname.includes('replit') 
+    ? `https://${hostname}` 
+    : `http://${hostname}`;
+  
+  return new JiraOAuthService({
+    clientId: clientIdSetting.value,
+    clientSecret: clientSecretSetting.value,
+    redirectUri: `${baseUrl}/oauth/callback`,
+  });
 }

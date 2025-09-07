@@ -503,7 +503,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const oauthService = createJiraOAuthService();
+      const oauthService = await createJiraOAuthService();
       const state = Math.random().toString(36).substring(2, 15);
       
       // Store state in session or memory for validation (in production, use proper session storage)
@@ -524,7 +524,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Authorization code is required" });
       }
 
-      const oauthService = createJiraOAuthService();
+      const oauthService = await createJiraOAuthService();
       
       // Exchange code for tokens
       const tokens = await oauthService.exchangeCodeForTokens(code);
