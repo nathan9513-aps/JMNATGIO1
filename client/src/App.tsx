@@ -11,6 +11,7 @@ import Clients from "@/pages/clients";
 import Projects from "@/pages/projects";
 import Reports from "@/pages/reports";
 import Settings from "@/pages/settings";
+import AdminSetup from "@/pages/admin-setup";
 import OAuthCallback from "@/pages/oauth-callback";
 import NotFound from "@/pages/not-found";
 import Sidebar from "@/components/layout/sidebar";
@@ -39,6 +40,7 @@ function Router() {
             <Route path="/projects" component={Projects} />
             <Route path="/reports" component={Reports} />
             <Route path="/settings" component={Settings} />
+            <Route path="/admin/setup" component={AdminSetup} />
             <Route path="/oauth/callback" component={OAuthCallback} />
             <Route component={NotFound} />
           </Switch>
