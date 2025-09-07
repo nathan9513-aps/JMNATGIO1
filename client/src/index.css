@@ -5,32 +5,37 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(0 0% 100%);
+  --background: hsl(0 0% 99%);
   --foreground: hsl(222.2 84% 4.9%);
   --card: hsl(0 0% 100%);
   --card-foreground: hsl(222.2 84% 4.9%);
   --popover: hsl(0 0% 100%);
   --popover-foreground: hsl(222.2 84% 4.9%);
-  --primary: hsl(221.2 83.2% 53.3%);
+  --primary: hsl(262.1 83.3% 57.8%);
   --primary-foreground: hsl(210 40% 98%);
-  --secondary: hsl(210 40% 96%);
-  --secondary-foreground: hsl(222.2 84% 4.9%);
-  --muted: hsl(210 40% 96%);
-  --muted-foreground: hsl(215.4 16.3% 46.9%);
-  --accent: hsl(210 40% 96%);
-  --accent-foreground: hsl(222.2 84% 4.9%);
+  --secondary: hsl(220 14.3% 95.9%);
+  --secondary-foreground: hsl(220.9 39.3% 11%);
+  --muted: hsl(220 14.3% 95.9%);
+  --muted-foreground: hsl(220 8.9% 46.1%);
+  --accent: hsl(220 14.3% 95.9%);
+  --accent-foreground: hsl(220.9 39.3% 11%);
   --destructive: hsl(0 84.2% 60.2%);
   --destructive-foreground: hsl(210 40% 98%);
-  --border: hsl(214.3 31.8% 91.4%);
-  --input: hsl(214.3 31.8% 91.4%);
-  --ring: hsl(221.2 83.2% 53.3%);
+  --border: hsl(220 13% 91%);
+  --input: hsl(220 13% 91%);
+  --ring: hsl(262.1 83.3% 57.8%);
   --chart-1: hsl(12 76% 61%);
   --chart-2: hsl(173 58% 39%);
   --chart-3: hsl(197 37% 24%);
   --chart-4: hsl(43 74% 66%);
   --chart-5: hsl(27 87% 67%);
-  --radius: 8px;
+  --radius: 12px;
   --font-sans: 'Inter', system-ui, sans-serif;
+  --gradient-primary: linear-gradient(135deg, hsl(262.1 83.3% 57.8%) 0%, hsl(290 91% 65%) 100%);
+  --gradient-secondary: linear-gradient(135deg, hsl(220 14.3% 95.9%) 0%, hsl(220 14.3% 90%) 100%);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 .dark {
@@ -68,21 +73,117 @@
 @layer utilities {
   .timer-display {
     font-feature-settings: "tnum";
+    font-variant-numeric: tabular-nums;
+  }
+
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-secondary {
+    background: var(--gradient-secondary);
+  }
+
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+
+  .sidebar-nav a {
+    transition: all 0.2s ease-in-out;
+    position: relative;
+    overflow: hidden;
   }
 
   .sidebar-nav a:hover {
     background-color: var(--accent);
+    transform: translateX(4px);
   }
 
   .sidebar-nav a.active {
-    background-color: var(--primary);
+    background: var(--gradient-primary);
     color: var(--primary-foreground);
+    box-shadow: var(--shadow);
+  }
+
+  .sidebar-nav a.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.2) 100%);
+  }
+
+  .card-enhanced {
+    background: var(--card);
+    box-shadow: var(--shadow);
+    border: 1px solid hsl(var(--border));
+    transition: all 0.2s ease-in-out;
+  }
+
+  .card-enhanced:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  .stat-card {
+    background: linear-gradient(135deg, var(--card) 0%, var(--muted) 100%);
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .timer-glow {
+    text-shadow: 0 0 20px rgba(138, 43, 226, 0.5);
+    animation: pulse 2s infinite;
+  }
+
+  .running-indicator {
+    animation: pulse-red 2s infinite;
+  }
+
+  @keyframes pulse-red {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+  }
+
+  .fade-in {
+    animation: fadeIn 0.5s ease-in;
+  }
+
+  .slide-in {
+    animation: slideIn 0.3s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(-20px); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
   }
 
   @media (max-width: 768px) {
     .sidebar {
       transform: translateX(-100%);
       transition: transform 0.3s ease-in-out;
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.95);
     }
     
     .sidebar.mobile-open {
