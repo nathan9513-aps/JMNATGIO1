@@ -13,15 +13,9 @@ import {
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Debug middleware to log ALL incoming requests
-  app.use('*', (req, res, next) => {
-    if (!req.originalUrl.includes('/api/time-entries/running')) {
-      console.log(`🌍 [${new Date().toISOString()}] ${req.method} ${req.originalUrl}`, {
-        userAgent: req.headers['user-agent'],
-        query: req.query,
-        params: req.params
-      });
-    }
+  // OAuth callback logging
+  app.use('/oauth-callback', (req, res, next) => {
+    console.log(`🔐 OAuth callback: ${req.method} ${req.originalUrl}`, req.query);
     next();
   });
 
