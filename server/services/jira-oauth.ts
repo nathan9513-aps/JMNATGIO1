@@ -56,10 +56,19 @@ export class JiraOAuthService {
   async exchangeCodeForTokens(code: string): Promise<JiraOAuthTokens> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-    
+
+    const payload = {
+      grant_type: 'authorization_code',
+      client_id: this.config.clientId,
+      client_secret: this.config.clientSecret,
+      code: code,
+      redirect_uri: this.config.redirectUri,
+    };
+
     try {
       console.log("🔄 Starting OAuth token exchange...");
-      
+      console.log("OAuth token exchange payload:", JSON.stringify(payload, null, 2));
+
       const response = await fetch(`${this.baseAuthUrl}/oauth/token`, {
         method: 'POST',
         headers: {
@@ -67,39 +76,47 @@ export class JiraOAuthService {
           'User-Agent': 'Replit-Jira-Time-Tracker/1.0',
           'Accept': 'application/json',
         },
-        body: JSON.stringify({
-          grant_type: 'authorization_code',
-          client_id: this.config.clientId,
-          client_secret: this.config.clientSecret,
-          code: code,
-          redirect_uri: this.config.redirectUri,
-        }),
+        body: JSON.stringify(payload),
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
+      const responseText = await response.text();
+      console.log("OAuth token exchange response:", response.status, responseText);
+
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error("❌ OAuth token exchange HTTP error:", response.status, errorText);
-        throw new Error(`OAuth token exchange failed (${response.status}): ${errorText}`);
+        console.error("❌ OAuth token exchange HTTP error:", response.status, responseText);
+        throw new Error(`OAuth token exchange failed (${response.status}): ${responseText}`);
       }
 
-      console.log("✅ OAuth token exchange successful");
-      return response.json();
-      
+      try {
+        const json = JSON.parse(responseText);
+        console.log("✅ OAuth token exchange successful, parsed JSON:", json);
+        return json;
+      } catch (parseError) {
+        console.error("❌ Failed to parse OAuth token response JSON:", parseError, responseText);
+        throw new Error("OAuth token exchange succeeded but response is not valid JSON");
+      }
+
     } catch (error: any) {
       clearTimeout(timeoutId);
-      console.error("❌ OAuth token exchange network error:", error);
-      
+      console.error("❌ OAuth token exchange network error:", error, {
+        payload,
+        clientId: this.config.clientId,
+        clientSecret: this.config.clientSecret,
+        redirectUri: this.config.redirectUri,
+        code,
+      });
+
       if (error.name === 'AbortError') {
-        throw new Error('OAuth token exchange timed out after 30 seconds');
+        throw new Error('OAuth token exchange timed out after 30 secondi');
       }
-      
+
       if (error.code === 'ENOTFOUND' || error.errno === -3001) {
         throw new Error('Network connectivity issue: Unable to reach Atlassian servers. Please check your internet connection.');
       }
-      
+
       throw new Error(`OAuth token exchange failed: ${error.message}`);
     }
   }
