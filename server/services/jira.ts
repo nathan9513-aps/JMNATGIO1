@@ -1,3 +1,15 @@
+// Funzione per ricaricare le variabili OAuth da storage e impostare l'ambiente
+import { storage } from "../storage";
+
+export async function ensureJiraOAuthEnv() {
+  const accessTokenSetting = await storage.getAppSetting("JIRA_OAUTH_ACCESS_TOKEN");
+  const siteIdSetting = await storage.getAppSetting("JIRA_SITE_ID");
+  if (accessTokenSetting?.value && siteIdSetting?.value) {
+    process.env.JIRA_AUTH_TYPE = "oauth";
+    process.env.JIRA_OAUTH_ACCESS_TOKEN = accessTokenSetting.value;
+    process.env.JIRA_SITE_ID = siteIdSetting.value;
+  }
+}
 interface JiraConfig {
   domain?: string;
   username?: string;

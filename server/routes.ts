@@ -174,8 +174,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Jira integration
   app.post("/api/jira/search-issues", async (req, res) => {
     try {
+      const { ensureJiraOAuthEnv } = await import("./services/jira");
+      await ensureJiraOAuthEnv();
       const { query } = req.body;
-      
       const jiraService = createJiraService();
       const issues = await jiraService.searchIssues(query);
       res.json(issues);
@@ -187,15 +188,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/jira/worklog", async (req, res) => {
     try {
+      const { ensureJiraOAuthEnv } = await import("./services/jira");
+      await ensureJiraOAuthEnv();
       const { issueKey, timeSpent, comment, started } = req.body;
-      
       const jiraService = createJiraService();
       const worklog = await jiraService.addWorklog(issueKey, {
         timeSpent,
         comment,
         started,
       });
-      
       res.json(worklog);
     } catch (error) {
       console.error("Jira worklog error:", error);
@@ -205,6 +206,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/jira/projects", async (req, res) => {
     try {
+      const { ensureJiraOAuthEnv } = await import("./services/jira");
+      await ensureJiraOAuthEnv();
       const jiraService = createJiraService();
       const projects = await jiraService.getProjects();
       res.json(projects);
@@ -217,8 +220,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get single Jira issue
   app.post("/api/jira/get-issue", async (req, res) => {
     try {
+      const { ensureJiraOAuthEnv } = await import("./services/jira");
+      await ensureJiraOAuthEnv();
       const { issueKey } = req.body;
-      
       const jiraService = createJiraService();
       const issue = await jiraService.getIssue(issueKey);
       res.json(issue);
@@ -231,8 +235,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update Jira issue
   app.post("/api/jira/update-issue", async (req, res) => {
     try {
+      const { ensureJiraOAuthEnv } = await import("./services/jira");
+      await ensureJiraOAuthEnv();
       const { issueKey, updateData } = req.body;
-      
       const jiraService = createJiraService();
       const result = await jiraService.updateIssue(issueKey, updateData);
       res.json({ success: true, result });
@@ -245,8 +250,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create new Jira issue
   app.post("/api/jira/create-issue", async (req, res) => {
     try {
+      const { ensureJiraOAuthEnv } = await import("./services/jira");
+      await ensureJiraOAuthEnv();
       const { issueData } = req.body;
-      
       const jiraService = createJiraService();
       const result = await jiraService.createIssue(issueData);
       res.json(result);
@@ -259,8 +265,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get issue types for a project
   app.post("/api/jira/issue-types", async (req, res) => {
     try {
+      const { ensureJiraOAuthEnv } = await import("./services/jira");
+      await ensureJiraOAuthEnv();
       const { projectKey } = req.body;
-      
       const jiraService = createJiraService();
       const issueTypes = await jiraService.getIssueTypes(projectKey);
       res.json(issueTypes);
@@ -273,8 +280,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get transitions for an issue
   app.post("/api/jira/transitions", async (req, res) => {
     try {
+      const { ensureJiraOAuthEnv } = await import("./services/jira");
+      await ensureJiraOAuthEnv();
       const { issueKey } = req.body;
-      
       const jiraService = createJiraService();
       const transitions = await jiraService.getIssueTransitions(issueKey);
       res.json(transitions);
@@ -287,14 +295,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Transition an issue (change status, close, etc.)
   app.post("/api/jira/transition-issue", async (req, res) => {
     try {
+      const { ensureJiraOAuthEnv } = await import("./services/jira");
+      await ensureJiraOAuthEnv();
       const { issueKey, transitionId, comment } = req.body;
-      
       const jiraService = createJiraService();
       const transitionData = {
         transition: { id: transitionId },
         ...(comment && { comment: { body: comment } })
       };
-      
       await jiraService.transitionIssue(issueKey, transitionData);
       res.json({ success: true });
     } catch (error) {
@@ -306,8 +314,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get comments for an issue
   app.post("/api/jira/comments", async (req, res) => {
     try {
+      const { ensureJiraOAuthEnv } = await import("./services/jira");
+      await ensureJiraOAuthEnv();
       const { issueKey } = req.body;
-      
       const jiraService = createJiraService();
       const comments = await jiraService.getComments(issueKey);
       res.json(comments);
@@ -320,8 +329,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add comment to an issue
   app.post("/api/jira/add-comment", async (req, res) => {
     try {
+      const { ensureJiraOAuthEnv } = await import("./services/jira");
+      await ensureJiraOAuthEnv();
       const { issueKey, comment } = req.body;
-      
       const jiraService = createJiraService();
       const result = await jiraService.addComment(issueKey, { body: comment });
       res.json(result);
