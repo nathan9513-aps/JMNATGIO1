@@ -21,7 +21,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // OAuth callback endpoint (backend) - handles Atlassian redirect
   app.get("/oauth-callback", async (req, res) => {
-    console.log("🔐 OAuth callback received:", req.query);
+  console.log("🔐 OAuth callback received:", req.query);
+  console.log("🔐 OAuth callback full URL:", req.originalUrl);
     
     const { code, state, error } = req.query;
     
